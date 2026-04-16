@@ -1,0 +1,195 @@
+// SPDX-License-Identifier: (GPL-2.0+ or MIT)
+/*
+ * Allwinner Technology CO., Ltd. sun8iw21p1 platform
+ *
+ * modify base on juno.dts
+ */
+
+/dts-v1/;
+
+#include "sun8iw22p1.dtsi"
+
+/ {
+	model = "sun8iw22";
+	compatible = "allwinner,t153", "arm,sun8iw55p1";
+
+	aliases {
+		serial0 = &uart0;
+	};
+
+	chosen {
+		stdout-path = "serial0:115200n8";
+	};
+
+	firmware {
+		optee {
+			shm_base = <0x42500000>;	/* shm must between 0x42500000-->0x4290000 */
+			shm_size = <0x00400000>;
+		//	optee_base = <0x42900000>;
+		//	optee_size = <0x00100000>;
+			ta_ram_base = <0x42A00000>;	/* ta  must between 0x42A00000-->0x43300000 */
+			ta_ram_size = <0x00900000>;
+		};
+	};
+};
+
+&pio {
+        gmac0_pins_default: gmac0@0 {
+               pins = "PA4", "PA5", "PA6", "PA7", "PA8", "PA9", "PA10", "PA11",
+                       "PA12", "PA13", "PA15", "PA16", "PA17", "PA18", "PA19";
+                function = "rgmii0_pa";
+                drive-strength = <40>;
+                bias-pull-up;
+        };
+
+        gmac1_pins_default: gmac1@0 {
+                pins = "PG0", "PG1", "PG2", "PG3", "PG4", "PG5", "PG6", "PG7",
+                        "PG8", "PG9", "PG10", "PG11", "PG12", "PG13";
+                function = "rgmii1";
+                drive-strength = <40>;
+                bias-pull-up;
+        };	 
+
+	twi4_pins_default: twi4@0 {
+		pins = "PB13", "PB14";
+		function = "twi4";
+		drive-strength = <20>;
+		bias-pull-up;
+	};
+
+	spi0_pins_default: spi0@0 {
+		pins = "PC2", "PC3"; /* mosi, miso */
+		function = "spi0";
+		drive-strength = <20>;
+	};
+
+	spi0_pins_cs: spi0@1 {
+		pins = "PC1", "PC4", "PC5"; /* cs, wp, hold */
+		function = "spi0";
+		drive-strength = <20>;
+		bias-pull-up;
+	};
+
+	spi0_pins_clk: spi0@2 {
+		pins = "PC0"; /* clk */
+		function = "spi0";
+		drive-strength = <40>;
+	};
+
+};
+
+&mmc0 {
+	/*cd-gpios = <&pio 5 6 GPIO_ACTIVE_LOW>;*/	/* PF6 */
+	bus-width = <4>;
+	status = "disabled";
+};
+
+&mmc2 {
+	bus-width = <8>;
+	cap-mmc-highspeed;
+	mmc-ddr-1_8v;
+	max-frequency = <50000000>;
+	sdc_ex_dly_used = <2>;
+	sdc_tm4_hs200_max_freq = <200>;
+	sdc_tm4_hs400_max_freq = <150>;
+	sdc_tm4_win_th = <0x7>;
+	sdc_io_1v8 = <0x1>;
+	status = "okay";
+};
+
+&uart0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart0_ph_pins>;
+	status = "okay";
+};
+
+&platform {
+	eraseflag = <1>;
+	debug_mode = <4>;
+};
+
+&target {
+	boot_clock = <1008>;	/*CPU boot frequency, Unit: MHz*/
+	auto_fel = <0>;		/*1:support auto fel; 0:not support auto fel*/
+	burn_key = <1>;		/*1:support burn key; 0:not support burn key*/
+};
+
+&udc0 {
+	status = "okay";
+};
+
+&udc_phy {
+	status = "okay";
+};
+
+&ehci0 {
+	//vbus-gpio = <&pio 1 2 GPIO_ACTIVE_HIGH>;  // GPIO : PB2
+	status = "okay";
+};
+
+&ehci1 {
+	//vbus-gpio = <&pio 1 3 GPIO_ACTIVE_HIGH>;  // GPIO : PB3
+	status = "okay";
+};
+
+&twi4 {
+	clock-frequency = <100000>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&twi4_pins_default>;
+	status = "disabled";
+};
+
+&spi0 {
+	pinctrl-0 = <&spi0_pins_default>, <&spi0_pins_cs>, <&spi0_pins_clk>;
+	pinctrl-names = "default";
+	sunxi,spi-bus-mode = <SUNXI_SPI_BUS_FLASH>;
+	sunxi,spi-cs-mode = <SUNXI_SPI_CS_SOFT>;
+	status = "disabled";
+
+	spi-nand@0 {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		compatible = "spi-nand";
+		reg = <0x0>;
+		spi-max-frequency = <100000000>;
+		spi-rx-bus-width=<0x04>;
+		spi-tx-bus-width=<0x04>;
+		status="okay";
+	};
+};
+&mdio0 {
+        gmac0_phy0: ethernet-phy@1 {
+                reg = <0x1>;
+        };
+
+        gmac0_phy1: ethernet-phy@1 {
+                reg = <0x1>;
+        };
+};
+
+&gmac0 {
+        phy-mode = "rgmii";
+        max-speed = <1000>;
+        pinctrl-names = "default";
+        pinctrl-0 = <&gmac0_pins_default>;
+        //aw,soc-phy-clk-en;
+        tx-delay = <9>;
+        rx-delay = <6>;
+        snps,reset-gpio = <&pio 9 2 GPIO_ACTIVE_HIGH>;  // PE0
+        snps,reset-delays-us = <0 10000 30000>;
+        status = "okay";
+};
+
+&gmac1 {
+        phy-mode = "rgmii";
+        max-speed = <1000>;
+        pinctrl-names = "default";
+        pinctrl-0 = <&gmac1_pins_default>;
+       // aw,soc-phy-clk-en;
+        tx-delay = <9>;
+        rx-delay = <5>;
+        snps,reset-gpio = <&pio 9 3 GPIO_ACTIVE_HIGH>; // PE9
+        snps,reset-delays-us = <0 10000 30000>;
+        status = "okay";
+};
+
