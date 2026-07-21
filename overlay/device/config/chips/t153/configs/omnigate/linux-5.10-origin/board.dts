@@ -973,7 +973,7 @@
 	wlan {
 		compatible    = "allwinner,sunxi-wlan";
 		wlan_busnum   = <0x3>;
-		wlan_regon    = <&pio PB 5 GPIO_ACTIVE_HIGH>;
+		wlan_regon    = <&pio PJ 10 GPIO_ACTIVE_HIGH>;
 		wlan_hostwake = <&pio PB 1 GPIO_ACTIVE_HIGH>;
 		wakeup-source;
 		regulator-boot-on;
@@ -992,7 +992,7 @@
 &btlpm {
 	compatible  = "allwinner,sunxi-btlpm";
 	uart_index  = <0x7>;
-	bt_wake     = <&pio PB 6 GPIO_ACTIVE_HIGH>;
+	bt_wake     = <&pio PJ 11 GPIO_ACTIVE_HIGH>;
 	bt_hostwake = <&pio PB 4 GPIO_ACTIVE_HIGH>;
 	wakeup-source; 
 	status      = "okay";
@@ -1246,103 +1246,6 @@
 	status = "disabled";
 
 };
-#if 0
-&gmac0_phy0 {
-	compatible = "ethernet-phy-id001c.c916";
-	reset-gpios = <&pio PJ 2 GPIO_ACTIVE_HIGH>;
-	/* For RTL8211F: PHY datasheet rst time */
-	reset-assert-us = <10000>;
-	reset-deassert-us = <30000>;
-};
-
-&gmac0 {
-	phy-mode = "rgmii";
-	pinctrl-names = "default", "sleep";
-	pinctrl-0 = <&gmac0_pins_default>;
-	pinctrl-1 = <&gmac0_pins_sleep>;
-	phy-handle = <&gmac0_phy0>;
-	//aw,soc-phy-clk-en;
-	tx-delay = <31>;
-	rx-delay = <31>;
-	// dwmac-supply = <&reg_dcdc1>;
-	// phy-supply = <&reg_dcdc1>;
-	status = "okay";
-};
-
-&gmac1_phy0 {
-	compatible = "ethernet-phy-id001c.c916";
-	reset-gpios = <&pio PJ 3 GPIO_ACTIVE_HIGH>;
-	/* For RTL8211F: PHY datasheet rst time */
-	reset-assert-us = <10000>;
-	reset-deassert-us = <30000>;
-};
-
-&gmac1 {
-	phy-mode = "rgmii";
-	pinctrl-names = "default", "sleep";
-	pinctrl-0 = <&gmac1_pins_default>;
-	pinctrl-1 = <&gmac1_pins_sleep>;
-	phy-handle = <&gmac1_phy0>;
-	//aw,soc-phy-clk-en;
-	tx-delay = <31>;
-	rx-delay = <31>;
-	// dwmac-supply = <&reg_dcdc1>;
-	// phy-supply = <&reg_dcdc1>;
-	status = "okay";
-};
-
-&mdio0 {
-        gmac0_phy0: ethernet-phy@0 {
-                compatible = "ethernet-phy-id001c.c916";
-                reg = <0x1>;
-                max-speed = <1000>;  /* Max speed capability */
-                reset-gpios = <&pio PJ 2 GPIO_ACTIVE_LOW>;
-                /* PHY datasheet rst time */
-                reset-assert-us = <10000>;
-                reset-deassert-us = <30000>;
-        };
-};
-
-&mdio1 {
-	gmac1_phy0: ethernet-phy@1 {
-                compatible = "ethernet-phy-id001c.c916";
-                reg = <0x1>;
-                max-speed = <1000>;  /* Max speed capability */
-                reset-gpios = <&pio PJ 3 GPIO_ACTIVE_LOW>;
-                /* PHY datasheet rst time */
-                reset-assert-us = <10000>;
-                reset-deassert-us = <100000>;
-        };
-};
-
-&gmac0 {
-        phy-mode = "rgmii";
-        pinctrl-names = "default", "sleep";
-        pinctrl-0 = <&gmac0_pins_default>;
-        pinctrl-1 = <&gmac0_pins_sleep>;
-        phy-handle = <&gmac0_phy0>;
-        //aw,soc-phy-clk-en;
-        // phy-supply = <&reg_dcdc1>;
-        tx-delay = <4>;
-	rx-delay = <6>;
-        status = "okay";
-};
-
-
-&gmac1 {
-        phy-mode = "rgmii";
-        pinctrl-names = "default", "sleep";
-        pinctrl-0 = <&gmac1_pins_default>;
-        pinctrl-1 = <&gmac1_pins_sleep>;
-        phy-handle = <&gmac1_phy0>;
-        //aw,soc-phy-clk-en;
-        tx-delay = <4>;
-        rx-delay = <6>;
-        // dwmac-supply = <&reg_dcdc1>;
-        // phy-supply = <&reg_dcdc1>;
-        status = "okay";
-};
-#endif
 &gmac0_phy0 {
         compatible = "ethernet-phy-id001c.c916";
         reg = <0x1>;         /* 如果你的 PHY 硬件地址是 1，这里保持 0x1 */
@@ -1358,7 +1261,7 @@
         max-speed = <1000>;  
         reset-gpios = <&pio PJ 3 GPIO_ACTIVE_LOW>;
         reset-assert-us = <10000>;
-        reset-deassert-us = <100000>;
+        reset-deassert-us = <30000>;
 };
 
 /* 2. GMAC 节点的配置保持你的不变 */
@@ -1381,14 +1284,13 @@
         pinctrl-0 = <&gmac1_pins_default>;
         pinctrl-1 = <&gmac1_pins_sleep>;
         phy-handle = <&gmac1_phy0>;
-        //aw,soc-phy-clk-en;
-        tx-delay = <0>;
-        rx-delay = <0>;
+        aw,soc-phy-clk-en;
+        tx-delay = <9>;
+        rx-delay = <6>;
         // dwmac-supply = <&reg_dcdc1>;
         // phy-supply = <&reg_dcdc1>;
         status = "okay";
 };
-
 &dma {
 	reset-control;
 };

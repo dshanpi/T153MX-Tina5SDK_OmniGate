@@ -1,0 +1,13 @@
+platform/allwinner/wireless/firmware/aic8800/sdio/aic8800d80/aic_userconfig_8800d80-Typ.txt
+platform/allwinner/wireless/firmware/aic8800/sdio/aic8800d80/fmacfw_8800d80.bin
+platform/allwinner/wireless/firmware/aic8800/sdio/aic8800d80/fmacfw_8800d80_h_u02.bin
+platform/allwinner/wireless/firmware/aic8800/sdio/aic8800d80/fmacfw_rf_8800d80.bin
+platform/allwinner/wireless/firmware/aic8800/sdio/aic8800d80/fmacfw_rf_8800d80_u02.bin
+platform/allwinner/wireless/firmware/aic8800/sdio/aic8800d80/fw_adid_8800d80.bin
+platform/allwinner/wireless/firmware/aic8800/sdio/aic8800d80/fw_adid_8800d80_u04.bin
+platform/allwinner/wireless/firmware/aic8800/sdio/aic8800d80/fw_patch_8800d80.bin
+platform/allwinner/wireless/firmware/aic8800/sdio/aic8800d80/fw_patch_8800d80_u02_ext0.bin
+platform/allwinner/wireless/firmware/aic8800/sdio/aic8800d80/fw_patch_8800d80_u04.bin
+platform/allwinner/wireless/firmware/aic8800/sdio/aic8800d80/fw_patch_table_8800d80.bin
+platform/allwinner/wireless/firmware/aic8800/sdio/aic8800d80/fw_patch_table_8800d80_u04.bin
+platform/allwinner/wireless/firmware/aic8800/sdio/aic8800d80/lmacfw_rf_8800d80.bin

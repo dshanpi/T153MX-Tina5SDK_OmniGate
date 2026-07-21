@@ -1,0 +1,59 @@
+status	path
+ M	bsp/drivers/net/wireless/aic8800/aic8800_btlpm/aic8800_btlpm.c
+ M	buildroot/buildroot-202205/configs/sun8iw22p1_t153_mmc_defconfig
+ M	device/config/chips/t153/bin/amp_rv0.bin
+??	device/config/chips/t153/bin/u-boot-dtb.fex
+??	device/config/chips/t153/bin/u-boot-nodtb.fex
+??	device/config/chips/t153/configs/omnigate/uboot-board.dts
+??	device/config/chips/t153/configs/omnigate/BoardConfig.mk
+??	device/config/chips/t153/configs/omnigate/sys_config.fex
+??	device/config/chips/t153/configs/omnigate/dtbo/sunxi_board0.dts
+??	device/config/chips/t153/configs/omnigate/dtbo/sunxi_board0.dtbo
+??	device/config/chips/t153/configs/omnigate/dtbo/sunxi_board1.dtbo
+??	device/config/chips/t153/configs/omnigate/dtbo/sunxi_board2.dtbo
+??	device/config/chips/t153/configs/omnigate/dtbo/sunxi_board2.dts
+??	device/config/chips/t153/configs/omnigate/dtbo/dtco
+??	device/config/chips/t153/configs/omnigate/dtbo/sunxi_board1.dts
+??	device/config/chips/t153/configs/omnigate/dtbo/dtboimg.cfg
+??	device/config/chips/t153/configs/omnigate/dtbo/mkdtimg
+??	device/config/chips/t153/configs/omnigate/linux-5.10-origin/bsp_defconfig
+??	device/config/chips/t153/configs/omnigate/linux-5.10-origin/board.dts
+??	device/config/chips/t153/configs/omnigate/linux-5.10-origin/buildroot_linux_defconfig
+??	device/config/chips/t153/configs/omnigate/board.dts
+??	device/config/chips/t153/configs/omnigate/sys_partition.fex
+??	device/config/chips/t153/configs/omnigate/buildroot/BoardConfig.mk
+??	device/config/chips/t153/configs/omnigate/buildroot/sys_partition.fex
+??	device/config/chips/t153/configs/omnigate/buildroot/swupdate/sw-description-ab-emmc
+??	device/config/chips/t153/configs/omnigate/buildroot/swupdate/sw-subimgs-ab-emmc.cfg
+??	device/config/chips/t153/configs/omnigate/buildroot/env.cfg
+??	device/config/chips/t153/configs/omnigate/linux-5.10-rt/bsp_defconfig
+??	device/config/chips/t153/configs/omnigate/linux-5.10-rt/board.dts
+??	device/config/chips/t153/configs/omnigate/linux-5.10-rt/buildroot_linux_defconfig
+ M	platform/allwinner/wireless/firmware/aic8800/sdio/aic8800d80/fmacfw_8800d80_u02.bin
+ M	platform/allwinner/wireless/firmware/aic8800/sdio/aic8800d80/fw_adid_8800d80_u02.bin
+ M	platform/allwinner/wireless/firmware/aic8800/sdio/aic8800d80/fw_patch_8800d80_u02.bin
+ M	platform/allwinner/wireless/firmware/aic8800/sdio/aic8800d80/fw_patch_table_8800d80_u02.bin
+ M	platform/allwinner/wireless/firmware/aic8800/sdio/aic8800d80/lmacfw_rf_8800d80_u02.bin
+??	platform/allwinner/wireless/firmware/aic8800/sdio/aic8800d80/aic_userconfig_8800d80.txt
+??	tools/OpenixCLI/.trae/skills/openixcli-install-build/SKILL.md
+??	tools/OpenixCLI/openixcli.desktop
+??	tools/OpenixCLI/openixcli-v0.1.9-x86_64-unknown-linux-gnu.deb
+??	tools/OpenixCLI/LICENSE
+??	tools/OpenixCLI/README.md
+??	tools/OpenixCLI/openixcli
+??	tools/serial_agent/serial_core.py
+??	tools/serial_agent/crewai_tools.py
+??	tools/serial_agent/serial_agent_daemon.py
+??	tools/serial_agent/auto_flash_verify.py
+??	tools/serial_agent/README_AGENT_DAEMON.md
+??	tools/serial_agent/trae_serial_terminal.py
+??	tools/serial_agent/serial_agent_client.py
+??	tools/serial_agent/trae_serial_terminal_go
+??	tools/serial_agent/requirements.txt
+??	tools/serial_agent/langchain_tools.py
+??	tools/serial_agent/example_langchain_agent.py
+??	tools/serial_agent/example_crewai_agent.py
+??	tools/serial_agent/serial_pexpect.py
+??	tools/serial_agent/__pycache__/serial_core.cpython-38.pyc
+??	tools/serial_agent/__pycache__/serial_core.cpython-312.pyc
+??	tools/serial_agent/README.md

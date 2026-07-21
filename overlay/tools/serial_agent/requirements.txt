@@ -1,0 +1,7 @@
+pyserial>=3.5
+pexpect>=4.9.0
+pydantic>=2.5.0
+langchain>=0.2.0
+langchain-core>=0.2.0
+langchain-openai>=0.1.0
+crewai>=0.70.0
