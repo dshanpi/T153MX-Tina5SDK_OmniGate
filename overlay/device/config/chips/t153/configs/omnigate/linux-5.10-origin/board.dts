@@ -29,6 +29,31 @@
 		enable-active-high;
 	};
 
+	leds {
+		compatible = "gpio-leds";
+
+		led-status {
+			label = "t153:status";
+			gpios = <&pio PJ 9 GPIO_ACTIVE_HIGH>;
+			default-state = "on";
+			linux,default-trigger = "default-on";
+		};
+
+		led-heartbeat1 {
+			label = "t153:heartbeat1";
+			gpios = <&pio PE 1 GPIO_ACTIVE_HIGH>;
+			default-state = "on";
+			linux,default-trigger = "heartbeat";
+		};
+
+		led-heartbeat2 {
+			label = "t153:heartbeat2";
+			gpios = <&pio PE 2 GPIO_ACTIVE_HIGH>;
+			default-state = "on";
+			linux,default-trigger = "heartbeat";
+		};
+	};
+
 	reg_vdd_cpu: reg_vdd_cpu {
 		compatible = "sunxi-pwm-regulator";
 		pwms = <&pwmcs0 4 5000 1>;
@@ -244,15 +269,15 @@
 		display-timings {
 			native-mode = <&timing0>;
 			timing0: timing0 {
-				clock-frequency = <50000000>;
+				clock-frequency = <24000000>;
 				hactive = <1024>;
 				vactive = <768>;
 				hfront-porch = <10>;
 				hsync-len = <5>;
-				hback-porch = <20>;
-				vfront-porch = <5>;
-				vsync-len = <5>;
-				vback-porch = <10>;
+				hback-porch = <11>;
+				vfront-porch = <6>;
+				vsync-len = <2>;
+				vback-porch = <20>;
 				hsync-active = <0>;
 				vsync-active = <0>;
 				de-active = <0>;
@@ -339,12 +364,14 @@
 	};
 
 	uart5_pins_active: uart5_pins@0 {
-		pins = "PC9", "PC10", "PC11", "PC8";
+		pins = "PJ0", "PJ1";
 		function = "uart5";
+		drive-strength = <10>;
+		bias-pull-up;
 	};
 
 	uart5_pins_sleep: uart5_pins@1 {
-		pins = "PC9", "PC10", "PC11", "PC8";
+		pins = "PJ0", "PJ1";
 		function = "io_disabled";
 	};
 
@@ -359,15 +386,14 @@
 	};
 
 	uart7_pins_active: uart7_pins@0 {
-		pins = "PB13", "PB14", "PB11", "PB12";
+		pins = "PJ4", "PJ5";
 		function = "uart7";
-                drive-strength = <10>;
-                bias-pull-up;
-
+		drive-strength = <10>;
+		bias-pull-up;
 	};
 
 	uart7_pins_sleep: uart7_pins@1 {
-		pins = "PB13", "PB14", "PB11", "PB12";
+		pins = "PJ4", "PJ5";
 		function = "io_disabled";
 	};
 
@@ -392,13 +418,13 @@
 	};
 
 	can0_pins_active: can0_pins@0{
-		pins = "PJ12", "PJ14";
+		pins = "PJ12", "PJ13";
 		function = "can0";
 		drive-strength = <20>;
 	};
 
 	can0_pins_sleep: can0_pins@1{
-		pins = "PJ12", "PJ14";
+		pins = "PJ12", "PJ13";
 		function = "io_disabled";
 		bias-disable;
 	};
@@ -451,6 +477,13 @@
 		function = "gpio_in";
 	};
 
+	goodix_int_pin: goodix_int@0 {
+		pins = "PJ7";
+		function = "irq";
+		drive-strength = <20>;
+		bias-pull-up;
+	};
+
 	twi4_pins_default: twi4@0 {
 		pins = "PB13", "PB14";
 		function = "twi4";
@@ -498,12 +531,12 @@
 	};
 
 	gpadc1_pins_default: gpadc1@0 {
-		pins = "PA14","PA15";
+		pins = "PA20";
 		function = "gpadc1";
 	};
 
 	gpadc1_pins_sleep: gpadc1@1 {
-		pins = "PA14", "PA15";
+		pins = "PA20";
 		function = "gpio_in";
 	};
 
@@ -706,7 +739,8 @@
 	pinctrl-names = "default", "sleep";
 	pinctrl-0 = <&uart5_pins_active>;
 	pinctrl-1 = <&uart5_pins_sleep>;
-	status = "disabled";
+	uart-has-rtscts;
+	status = "okay";
 };
 
 &uart6 {
@@ -961,12 +995,12 @@
 
 &ehci0 {
 	drvvbus-supply = <&reg_usb0_vbus>;
-	status = "okay";
+	status = "disabled";
 };
 
 &ohci0 {
 	drvvbus-supply = <&reg_usb0_vbus>;
-	status = "okay";
+	status = "disabled";
 };
 
 &usbc1 {
@@ -977,12 +1011,12 @@
 
 &ehci1 {
 	drvvbus-supply = <&reg_usb1_vbus>;
-	status = "okay";
+	status = "disabled";
 };
 
 &ohci1 {
 	drvvbus-supply = <&reg_usb1_vbus>;
-	status = "okay";
+	status = "disabled";
 };
 
 &twi2 {
@@ -993,11 +1027,24 @@
 	/* For stability and backwards compatibility, we recommend setting 'twi_drv_used' to 1 */
 	twi_drv_used = <1>;
 	/* twi-supply = <&reg_cldo3>; */
-	status = "disabled";
+	status = "okay";
 
 	pcf8563: rtc@51 {
 		compatible = "nxp,pcf8563";
 		reg = <0x51>;
+	};
+
+	goodix_ts: touchscreen@5d {
+		compatible = "goodix,gt911";
+		reg = <0x5d>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&goodix_int_pin>;
+		interrupt-parent = <&pio>;
+		interrupts = <9 7 IRQ_TYPE_EDGE_FALLING>;
+		reset-gpios = <&pio PJ 6 GPIO_ACTIVE_LOW>;
+		touchscreen-size-x = <1024>;
+		touchscreen-size-y = <768>;
+		status = "okay";
 	};
 };
 
@@ -1053,28 +1100,22 @@
 	pinctrl-names = "default", "sleep";
 	pinctrl-0 = <&gpadc1_pins_default>;
 	pinctrl-1 = <&gpadc1_pins_sleep>;
-	channel_select = <0x2>;
+	channel_select = <0x40>;
 	channel_data_select = <0>;
-	channel_compare_select = <0x2>;
-	channel_cld_select = <0x2>;
+	channel_compare_select = <0x40>;
+	channel_cld_select = <0x40>;
 	channel_chd_select = <0>;
-	channel0_compare_lowdata = <1700000>;
-	channel0_compare_higdata = <1200000>;
-	channel1_compare_lowdata = <900000>;
-	channel1_compare_higdata = <0>;
-	status = "disabled";
-	keyadc1 {
-		key_cnt = <5>;
+	channel6_compare_lowdata = <1700000>;
+	channel6_compare_higdata = <1200000>;
+	status = "okay";
+	keyadc6 {
+		key_cnt = <3>;
 		key0_vol = <210>;
 		key0_val = <115>;
 		key1_vol = <410>;
 		key1_val = <114>;
 		key2_vol = <590>;
 		key2_val = <139>;
-		key3_vol = <750>;
-		key3_val = <28>;
-		key4_vol = <880>;
-		key4_val = <102>;
 	};
 };
 
@@ -1130,7 +1171,7 @@
 	bt {
 		compatible    = "allwinner,sunxi-bt";
 		bt_rst_n      = <&pio PB 0 GPIO_ACTIVE_HIGH>;
-		status        = "okay";
+		status        = "disabled";
 	};
 
 };
@@ -1140,8 +1181,8 @@
 	uart_index  = <0x7>;
 	bt_wake     = <&pio PJ 11 GPIO_ACTIVE_HIGH>;
 	bt_hostwake = <&pio PB 4 GPIO_ACTIVE_HIGH>;
-	wakeup-source; 
-	status      = "okay";
+	wakeup-source;
+	status      = "disabled";
 };
 
 &addr_mgt {
@@ -1201,7 +1242,7 @@
 	wait_time0_ns = <84>;
 	wait_time1_ns = <84>;
 	wait_data_time_ns = <600000>;
-	status = "disabled";
+	status = "okay";
 };
 
 /* audio dirver module -> audio codec */
