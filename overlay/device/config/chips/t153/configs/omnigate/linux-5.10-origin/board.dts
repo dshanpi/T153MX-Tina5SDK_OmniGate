@@ -386,14 +386,14 @@
 	};
 
 	uart7_pins_active: uart7_pins@0 {
-		pins = "PJ4", "PJ5";
+		pins = "PB11", "PB12", "PB13", "PB14";
 		function = "uart7";
 		drive-strength = <10>;
 		bias-pull-up;
 	};
 
 	uart7_pins_sleep: uart7_pins@1 {
-		pins = "PJ4", "PJ5";
+		pins = "PB11", "PB12", "PB13", "PB14";
 		function = "io_disabled";
 	};
 
@@ -1171,7 +1171,7 @@
 	bt {
 		compatible    = "allwinner,sunxi-bt";
 		bt_rst_n      = <&pio PB 0 GPIO_ACTIVE_HIGH>;
-		status        = "disabled";
+		status        = "okay";
 	};
 
 };
@@ -1182,7 +1182,7 @@
 	bt_wake     = <&pio PJ 11 GPIO_ACTIVE_HIGH>;
 	bt_hostwake = <&pio PB 4 GPIO_ACTIVE_HIGH>;
 	wakeup-source;
-	status      = "disabled";
+	status      = "okay";
 };
 
 &addr_mgt {
