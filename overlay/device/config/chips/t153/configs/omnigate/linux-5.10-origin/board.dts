@@ -149,6 +149,127 @@
 		status = "okay";
 	};
 
+	backlight0: backlight0 {
+		compatible = "pwm-backlight";
+		status = "okay";
+		brightness-levels = <
+			0   1   2   3   4   5   6   7
+			8   9   10  11  12  13  14  15
+			16  17  18  19  20  21  22  23
+			24  25  26  27  28  29  30  31
+			32  33  34  35  36  37  38  39
+			40  41  42  43  44  45  46  47
+			48  49  50  51  52  53  54  55
+			56  57  58  59  60  61  62  63
+			64  65  66  67  68  69  70  71
+			72  73  74  75  76  77  78  79
+			80  81  82  83  84  85  86  87
+			88  89  90  91  92  93  94  95
+			96  97  98  99  100 101 102 103
+			104 105 106 107 108 109 110 111
+			112 113 114 115 116 117 118 119
+			120 121 122 123 124 125 126 127
+			128 129 130 131 132 133 134 135
+			136 137 138 139 140 141 142 143
+			144 145 146 147 148 149 150 151
+			152 153 154 155 156 157 158 159
+			160 161 162 163 164 165 166 167
+			168 169 170 171 172 173 174 175
+			176 177 178 179 180 181 182 183
+			184 185 186 187 188 189 190 191
+			192 193 194 195 196 197 198 199
+			200 201 202 203 204 205 206 207
+			208 209 210 211 212 213 214 215
+			216 217 218 219 220 221 222 223
+			224 225 226 227 228 229 230 231
+			232 233 234 235 236 237 238 239
+			240 241 242 243 244 245 246 247
+			248 249 250 251 252 253 254 255>;
+		default-brightness-level = <150>;
+		pwms = <&pwm2 6 25000 0>;
+	};
+
+	panel_0: panel_0@0 {
+		compatible = "allwinner,panel-dsi";
+		status = "okay";
+		enable-delay-ms = <10>;
+		reset-delay-ms = <40>;
+		reset-gpios = <&pio PD 23 GPIO_ACTIVE_LOW>;
+		reset-on-sequence = <1 10>, <0 100>;
+		reset-off-sequence = <1 100>;
+		backlight = <&backlight0>;
+		dsi,flags = <(MIPI_DSI_MODE_VIDEO)>;
+		dsi,lanes = <4>;
+		dsi,format = <0>;
+
+		panel-init-sequence = [
+			39 00 04 df 91 68 f9
+			15 00 02 de 00
+			39 00 03 b2 00 7e
+			39 00 03 b3 00 7e
+			39 00 07 c1 00 10 00 00 00 00
+			39 00 08 bb 02 24 07 61 19 44 44
+			39 00 03 be 1a f2
+			39 00 0f c3 10 17 5a 17 5a 05 05 05 05 15 15 31 05 df
+			39 00 08 c4 11 80 00 df 09 06 14
+			39 00 18 ce 00 03 03 03 03 03 03 03 03 03 03 03 03 03 03 03 03 03 03 03 03 0f 03
+			39 00 0a cf 00 01 40 01 ca 01 ca 01 ca
+			39 00 18 d0 00 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f 03 01 05 07 09 0b 1e 15 1f 1f 15 1f
+			39 00 18 d1 00 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f 02 00 04 06 08 0a 1e 15 1f 1f 15 1f
+			39 00 18 d2 00 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f 00 02 0a 08 06 04 1f 15 1f 1f 15 1e
+			39 00 18 d3 00 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f 01 03 0b 09 07 05 1f 15 1f 1f 15 1e
+			39 00 26 d4 30 00 00 04 00 06 00 00 00 00 00 03 03 00 11 00 01 c0 04 01 01 11 80 01 c0 05 01 01 00 00 00 04 00 06 18 02 e3
+			39 00 09 d5 68 73 00 08 08 00 03 00
+			39 00 07 b7 00 d8 00 00 d8 00
+			39 00 27 c8 7f 69 5a 4e 4a 3b 40 2a 44 43 44 63 51 59 4c 48 3a 28 0f 7f 69 5a 4e 4a 3b 40 2a 44 43 44 63 51 59 4c 48 3a 28 0f
+			15 00 02 de 02
+			39 00 05 bb 00 5b 5c 41
+			39 00 04 b5 00 5a 0a
+			15 00 02 c6 22
+			15 00 02 d7 12
+			39 00 03 E7 00 00
+			15 00 02 DE 04
+			15 00 02 CC 02
+			15 00 02 E7 01
+			15 00 02 DE 00
+			15 00 02 35 00
+			05 78 01 11
+			05 14 01 29
+		];
+		panel-exit-sequence = [
+			05 00 01 28
+			05 78 01 10
+		];
+
+		display-timings {
+			native-mode = <&timing0>;
+			timing0: timing0 {
+				clock-frequency = <50000000>;
+				hactive = <1024>;
+				vactive = <768>;
+				hfront-porch = <10>;
+				hsync-len = <5>;
+				hback-porch = <20>;
+				vfront-porch = <5>;
+				vsync-len = <5>;
+				vback-porch = <10>;
+				hsync-active = <0>;
+				vsync-active = <0>;
+				de-active = <0>;
+				pixelclk-active = <0>;
+			};
+		};
+
+		port {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			panel0_in: endpoint@0 {
+				reg = <0>;
+				remote-endpoint = <&panel_output_0>;
+			};
+		};
+	};
+
 };
 
 &pio {
@@ -516,6 +637,31 @@
 
 	spi2_pins_sleep: spi2@2 {
 		pins = "PE2", "PE3", "PE4", "PE7";
+		function = "io_disabled";
+		bias-disable;
+	};
+
+	pwm2_6_pins_active: pwm2_6@0 {
+		pins = "PD22";
+		function = "pwm2_6";
+		drive-strength = <20>;
+	};
+
+	pwm2_6_pins_sleep: pwm2_6@1 {
+		pins = "PD22";
+		function = "gpio_in";
+		bias-pull-down;
+	};
+
+	dsi0_4lane_pins_a_fix: dsi0_4lane@2 {
+		pins = "PD0", "PD1", "PD2", "PD3", "PD4", "PD5", "PD6", "PD7", "PD8", "PD9";
+		function = "dsi";
+		drive-strength = <30>;
+		bias-disable;
+	};
+
+	dsi0_4lane_pins_b_fix: dsi0_4lane@3 {
+		pins = "PD0", "PD1", "PD2", "PD3", "PD4", "PD5", "PD6", "PD7", "PD8", "PD9";
 		function = "io_disabled";
 		bias-disable;
 	};
@@ -1305,6 +1451,72 @@
 	pinctrl-1 = <&rtp_pins_sleep>;
 	allwinner,tp-sensitive-adjust = <0xa>;
 	allwinner,filter-type = <0x3>;
+	status = "disabled";
+};
+
+&pwm2 {
+	status = "okay";
+};
+
+&pwm2_6 {
+	pinctrl-names = "active", "sleep";
+	pinctrl-0 = <&pwm2_6_pins_active>;
+	pinctrl-1 = <&pwm2_6_pins_sleep>;
+	status = "okay";
+};
+
+&dsi0 {
+	status = "okay";
+	pinctrl-names = "active", "sleep";
+	pinctrl-0 = <&dsi0_4lane_pins_a_fix>;
+	pinctrl-1 = <&dsi0_4lane_pins_b_fix>;
+	#address-cells = <1>;
+	#size-cells = <0>;
+	ports {
+		dsi0_out: port@1 {
+			dsi_out_panel: endpoint {
+				remote-endpoint = <&panel_input>;
+			};
+		};
+	};
+	panel: panel@0 {
+		compatible = "allwinner,virtual-panel";
+		status = "okay";
+		reg = <0>;
+		ports {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			panel_in: port@0 {
+				#address-cells = <1>;
+				#size-cells = <0>;
+				reg = <0>;
+				panel_input: endpoint@0 {
+					reg = <0>;
+					remote-endpoint = <&dsi_out_panel>;
+				};
+			};
+			panel_out: port@1 {
+				reg = <1>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+				panel_output_0: endpoint@0 {
+					reg = <0>;
+					remote-endpoint = <&panel0_in>;
+				};
+			};
+		};
+	};
+};
+
+&dlcd0 {
+	status = "okay";
+};
+
+&dsi0combophy {
+	status = "okay";
+};
+
+&lvds0 {
 	status = "disabled";
 };
 
