@@ -397,6 +397,42 @@
 		function = "io_disabled";
 	};
 
+	bt_pcm_clk_pin: bt-pcm-clk-pin {
+		pins = "PB5";
+		function = "i2s0_bclk";
+		drive-strength = <20>;
+		bias-disable;
+	};
+
+	bt_pcm_sync_pin: bt-pcm-sync-pin {
+		pins = "PB6";
+		function = "i2s0_lrck";
+		drive-strength = <20>;
+		bias-disable;
+	};
+
+	bt_pcm_dout_pin: bt-pcm-dout-pin {
+		/* PCM_IN at the Bluetooth device. */
+		pins = "PB7";
+		function = "i2s0_dout0";
+		drive-strength = <20>;
+		bias-disable;
+	};
+
+	bt_pcm_din_pin: bt-pcm-din-pin {
+		/* PCM_OUT from the Bluetooth device. */
+		pins = "PB8";
+		function = "i2s0_din0";
+		drive-strength = <20>;
+		bias-disable;
+	};
+
+	bt_pcm_pins_sleep: bt-pcm-pins-sleep {
+		pins = "PB5", "PB6", "PB7", "PB8";
+		function = "io_disabled";
+		bias-disable;
+	};
+
 	uart8_pins_active: uart8_pins@0 {
 		pins = "PD10", "PD11", "PD12", "PD13";
 		function = "uart8";
@@ -1166,10 +1202,10 @@
 		compatible    = "allwinner,sunxi-wlan";
 		wlan_busnum   = <0x3>;
 		wlan_regon    = <&pio PJ 10 GPIO_ACTIVE_HIGH>;
-			wlan_hostwake = <&pio PB 1 GPIO_ACTIVE_HIGH>;
-			wakeup-source;
-			regulator-always-on;
-			regulator-boot-on;
+		wlan_hostwake = <&pio PB 1 GPIO_ACTIVE_HIGH>;
+		wakeup-source;
+		regulator-always-on;
+		regulator-boot-on;
 		};
 
 	/* bt session */
@@ -1327,10 +1363,11 @@
 	tdm-num		= <0>;
 	tx-pin		= <0>;
 	rx-pin		= <0>;
-	/* pinctrl-used; */
-	/* pinctrl-names	= "default","sleep"; */
-	/*pinctrl-0	= <&i2s0_pins_a &i2s0_pins_c>; */
-	/* pinctrl-1	= <&i2s0_pins_b &i2s0_pins_d>; */
+	pinctrl-used;
+	pinctrl-names	= "default", "sleep";
+	pinctrl-0	= <&bt_pcm_clk_pin &bt_pcm_sync_pin
+			   &bt_pcm_dout_pin &bt_pcm_din_pin>;
+	pinctrl-1	= <&bt_pcm_pins_sleep>;
 	tx-hub-en;
 	rx-sync-en;
 	status		= "okay";

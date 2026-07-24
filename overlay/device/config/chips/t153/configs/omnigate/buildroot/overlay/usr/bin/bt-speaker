@@ -1,0 +1,205 @@
+#!/bin/sh
+
+HCI_DEV="${HCI_DEV:-hci0}"
+ALSA_PCM="${ALSA_PCM:-bt_speaker}"
+BT_NAME="${BT_NAME:-T153 Bluetooth Speaker}"
+BT_BASE_INIT="/etc/init.d/S45aic8800-bluetooth"
+BT_CONFIG="/etc/bluetooth/bt-speaker.conf"
+RUN_DIR="/tmp/bt-speaker"
+LOG_DIR="/tmp"
+
+wait_for()
+{
+	command="$1"
+	count=0
+	while ! sh -c "${command}" >/dev/null 2>&1; do
+		count=$((count + 1))
+		[ "${count}" -ge 50 ] && return 1
+		usleep 100000
+	done
+}
+
+stop_process()
+{
+	name="$1"
+	killall "${name}" 2>/dev/null || true
+	count=0
+	while pidof "${name}" >/dev/null 2>&1; do
+		count=$((count + 1))
+		[ "${count}" -ge 50 ] && return 1
+		usleep 100000
+	done
+}
+
+enable_speaker_path()
+{
+	# Keep the codec gain conservative; phone volume can then be used normally.
+	amixer -c 0 set 'DAC' 63 >/dev/null 2>&1 || true
+	amixer -c 0 set 'DACL' 160 >/dev/null 2>&1 || true
+	amixer -c 0 set 'LINEOUT Gain' 7 >/dev/null 2>&1 || true
+	# AW8010 is wired to the codec's differential LINEOUTP/LINEOUTN pair.
+	amixer -c 0 set 'DAC Output Select' differ >/dev/null 2>&1 || true
+	amixer -c 0 set 'LINEOUTL' on >/dev/null 2>&1 || true
+	amixer -c 0 set 'SPK' on >/dev/null 2>&1 || true
+}
+
+disable_speaker_path()
+{
+	amixer -c 0 set 'SPK' off >/dev/null 2>&1 || true
+	amixer -c 0 set 'LINEOUTL' off >/dev/null 2>&1 || true
+}
+
+stop_audio_services()
+{
+	if [ -r "${RUN_DIR}/auto-authorize.pid" ]; then
+		kill "$(cat "${RUN_DIR}/auto-authorize.pid")" 2>/dev/null || true
+	fi
+	if [ -r "${RUN_DIR}/agent-writer.pid" ]; then
+		kill "$(cat "${RUN_DIR}/agent-writer.pid")" 2>/dev/null || true
+	fi
+	stop_process bluetoothctl
+	stop_process bluealsa-aplay
+	stop_process bluealsa
+	stop_process bluetoothd
+	rm -rf "${RUN_DIR}"
+}
+
+start_pairing_agent()
+{
+	ctl_fifo="${RUN_DIR}/bluetoothctl.in"
+	mkfifo "${ctl_fifo}"
+
+	nohup bluetoothctl <"${ctl_fifo}" >"${LOG_DIR}/bt-speaker-agent.log" 2>&1 &
+	echo "$!" >"${RUN_DIR}/bluetoothctl.pid"
+
+	(
+		trap '' HUP
+		printf '%s\n' \
+			"power on" \
+			"system-alias \"${BT_NAME}\""
+		# bluetoothctl auto-registers its default agent asynchronously.
+		# Remove it first, then register a true Just Works speaker agent.
+		sleep 1
+		printf '%s\n' "agent off"
+		sleep 1
+		printf '%s\n' "agent NoInputNoOutput"
+		sleep 1
+		printf '%s\n' \
+			"default-agent" \
+			"pairable on" \
+			"discoverable on"
+		# Keep stdin open so bluetoothctl remains the registered pairing agent.
+		exec tail -f /dev/null
+	) >"${ctl_fifo}" 2>/dev/null </dev/null &
+	echo "$!" >"${RUN_DIR}/agent-writer.pid"
+}
+
+start_auto_authorizer()
+{
+	(
+		trap '' HUP
+		handled=0
+		while :; do
+			requests="$(grep -c 'Authorize service .*yes/no' \
+				"${LOG_DIR}/bt-speaker-agent.log" 2>/dev/null)"
+			[ -n "${requests}" ] || requests=0
+			while [ "${handled}" -lt "${requests}" ]; do
+				printf '%s\n' "yes" >"${RUN_DIR}/bluetoothctl.in"
+				handled=$((handled + 1))
+			done
+			sleep 1
+		done
+	) >/dev/null 2>&1 </dev/null &
+	echo "$!" >"${RUN_DIR}/auto-authorize.pid"
+}
+
+start_speaker()
+{
+	stop_audio_services
+	mkdir -p "${RUN_DIR}"
+
+	if [ ! -d "/sys/class/bluetooth/${HCI_DEV}" ]; then
+		"${BT_BASE_INIT}" start || return 1
+	fi
+	hciconfig "${HCI_DEV}" up || return 1
+
+	nohup bluetoothd -f "${BT_CONFIG}" -n \
+		>"${LOG_DIR}/bt-speaker-bluetoothd.log" 2>&1 </dev/null &
+	echo "$!" >"${RUN_DIR}/bluetoothd.pid"
+	if ! wait_for "bluetoothctl show"; then
+		echo "Bluetooth speaker: bluetoothd start timed out"
+		return 1
+	fi
+
+	# Audio service + Audio/Video Loudspeaker class.
+	hciconfig "${HCI_DEV}" class 0x200414
+
+	nohup bluealsa -i "${HCI_DEV}" -p a2dp-sink --initial-volume=100 \
+		>"${LOG_DIR}/bt-speaker-bluealsa.log" 2>&1 </dev/null &
+	echo "$!" >"${RUN_DIR}/bluealsa.pid"
+	if ! wait_for "bluealsa-aplay -L"; then
+		echo "Bluetooth speaker: bluealsa start timed out"
+		return 1
+	fi
+
+	enable_speaker_path
+	nohup bluealsa-aplay -D "${ALSA_PCM}" \
+		--pcm-buffer-time=500000 \
+		--pcm-period-time=100000 \
+		00:00:00:00:00:00 \
+		>"${LOG_DIR}/bt-speaker-aplay.log" 2>&1 </dev/null &
+	echo "$!" >"${RUN_DIR}/bluealsa-aplay.pid"
+
+	start_pairing_agent
+	start_auto_authorizer
+	sleep 1
+	echo "Bluetooth speaker is ready: ${BT_NAME}"
+	echo "Pair with it from a phone, then play music."
+}
+
+stop_speaker()
+{
+	stop_audio_services
+	disable_speaker_path
+	"${BT_BASE_INIT}" stop
+	echo "Bluetooth speaker is stopped"
+}
+
+show_status()
+{
+	echo "=== controller ==="
+	hciconfig -a 2>&1
+	echo "=== ACL connections ==="
+	hcitool con 2>&1
+	echo "=== BlueALSA PCMs ==="
+	bluealsa-aplay -L 2>&1
+	echo "=== processes ==="
+	ps | grep -E 'bluetoothd|bluealsa|bluealsa-aplay|bluetoothctl|hciattach' |
+		grep -v grep
+	echo "=== speaker mixer ==="
+	amixer -c 0 get 'DACL' 2>&1
+	amixer -c 0 get 'LINEOUTL' 2>&1
+	amixer -c 0 get 'SPK' 2>&1
+}
+
+case "$1" in
+	start)
+		start_speaker
+		;;
+	stop)
+		stop_speaker
+		;;
+	restart)
+		stop_speaker
+		sleep 1
+		start_speaker
+		;;
+	status)
+		show_status
+		;;
+	*)
+		echo "Usage: $0 {start|stop|restart|status}"
+		echo "Optional environment: BT_NAME, HCI_DEV, ALSA_PCM"
+		exit 1
+		;;
+esac

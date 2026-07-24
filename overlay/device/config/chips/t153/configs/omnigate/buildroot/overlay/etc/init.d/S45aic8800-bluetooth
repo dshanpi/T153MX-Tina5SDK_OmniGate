@@ -1,0 +1,91 @@
+#!/bin/sh
+
+MODULE_DIR="/lib/modules/$(uname -r)"
+HCI_LOG="/tmp/hciattach-aic.log"
+
+module_loaded()
+{
+	grep -q "^$1 " /proc/modules
+}
+
+load_module()
+{
+	module_loaded "$1" || insmod "${MODULE_DIR}/$1.ko"
+}
+
+set_bt_rfkill()
+{
+	requested_state="$1"
+
+	for rfkill_path in /sys/class/rfkill/rfkill*; do
+		[ -r "${rfkill_path}/name" ] || continue
+		rfkill_name="$(cat "${rfkill_path}/name")"
+		case "${rfkill_name}" in
+		sunxi-bt|bluetooth)
+			echo "${requested_state}" > "${rfkill_path}/state"
+			;;
+		esac
+	done
+}
+
+start_bt()
+{
+	load_module aic8800_bsp || return 1
+	load_module aic8800_fdrv || return 1
+	load_module aic8800_btlpm || return 1
+
+	# The AIC BSP adds its own Bluetooth rfkill after the SoC rfkill.
+	# Address them by name because their numeric indices are not stable.
+	set_bt_rfkill 0
+	sleep 1
+	set_bt_rfkill 1
+	sleep 1
+
+	# Keep the controller awake while the vendor HCI initialization runs.
+	[ -w /proc/bluetooth/sleep/btwrite ] &&
+		echo 1 > /proc/bluetooth/sleep/btwrite
+
+	killall hciattach 2>/dev/null
+	hciattach -n /dev/ttyAS7 aic >"${HCI_LOG}" 2>&1 &
+
+	wait_count=0
+	while [ ! -d /sys/class/bluetooth/hci0 ]; do
+		usleep 100000
+		wait_count=$((wait_count + 1))
+		if [ "${wait_count}" -ge 100 ]; then
+			echo "AIC Bluetooth: hci0 attach timed out"
+			cat "${HCI_LOG}"
+			return 1
+		fi
+	done
+
+	hciconfig hci0 up
+	echo "AIC Bluetooth: hci0 is up"
+}
+
+stop_bt()
+{
+	hciconfig hci0 down 2>/dev/null
+	killall hciattach 2>/dev/null
+	[ -w /proc/bluetooth/sleep/btwrite ] &&
+		echo 0 > /proc/bluetooth/sleep/btwrite
+	set_bt_rfkill 0
+}
+
+case "$1" in
+	start)
+		start_bt
+		;;
+	stop)
+		stop_bt
+		;;
+	restart)
+		stop_bt
+		sleep 1
+		start_bt
+		;;
+	*)
+		echo "Usage: $0 {start|stop|restart}"
+		exit 1
+		;;
+esac
