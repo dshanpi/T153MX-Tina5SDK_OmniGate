@@ -21,6 +21,10 @@
 		stdout-path = "serial0:115200n8";
 	};
 
+	wlan-reset {
+		reset-gpios = <&pio 9 10 GPIO_ACTIVE_HIGH>;
+	};
+
 	firmware {
 		optee {
 			shm_base = <0x42500000>;	/* shm must between 0x42500000-->0x4290000 */
@@ -192,4 +196,3 @@
         snps,reset-delays-us = <0 10000 30000>;
         status = "okay";
 };
-

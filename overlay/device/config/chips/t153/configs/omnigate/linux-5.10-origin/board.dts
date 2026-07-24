@@ -700,6 +700,11 @@
 	};
 
 };
+
+&sdc3_pins_b {
+	bias-disable;
+};
+
 &uart0 {
 	pinctrl-names = "default", "sleep";
 	pinctrl-0 = <&uart0_pins_active>;
@@ -1161,11 +1166,11 @@
 		compatible    = "allwinner,sunxi-wlan";
 		wlan_busnum   = <0x3>;
 		wlan_regon    = <&pio PJ 10 GPIO_ACTIVE_HIGH>;
-		wlan_hostwake = <&pio PB 1 GPIO_ACTIVE_HIGH>;
-		wakeup-source;
-		regulator-boot-on;
-		regulator-always-on;
-	};
+			wlan_hostwake = <&pio PB 1 GPIO_ACTIVE_HIGH>;
+			wakeup-source;
+			regulator-always-on;
+			regulator-boot-on;
+		};
 
 	/* bt session */
 	bt {
@@ -1560,5 +1565,3 @@
 &lvds0 {
 	status = "disabled";
 };
-
-
