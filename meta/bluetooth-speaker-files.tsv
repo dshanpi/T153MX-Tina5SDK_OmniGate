@@ -1,4 +1,5 @@
 type	path	purpose
+overlay	buildroot/buildroot-202205/configs/sun8iw22p1_t153_mmc_defconfig	Rootfs overlay and Bluetooth/audio package selection
 overlay	device/config/chips/t153/configs/omnigate/buildroot/overlay/etc/init.d/S45aic8800-bluetooth	AIC UART HCI initialization
 overlay	device/config/chips/t153/configs/omnigate/buildroot/overlay/usr/bin/bt-speaker	Bluetooth speaker service controller
 overlay	device/config/chips/t153/configs/omnigate/buildroot/overlay/etc/bluetooth/bt-speaker.conf	Dedicated BlueZ speaker configuration
@@ -6,6 +7,12 @@ overlay	device/config/chips/t153/configs/omnigate/buildroot/overlay/etc/asound.c
 overlay	buildroot/buildroot-202205/package/bluez-alsa/bluez-alsa.mk	SBC-only BlueALSA build policy
 overlay	device/config/chips/t153/configs/omnigate/linux-5.10-origin/board.dts	Bluetooth PCM I2S0 pinmux
 overlay	bsp/drivers/net/wireless/aic8800/aic8800_btlpm/aic8800_btlpm.c	AIC BT_WAKE and low-power support
+overlay	platform/allwinner/wireless/firmware/aic8800/sdio/aic8800d80/aic_userconfig_8800d80.txt	AIC8800D80 board firmware configuration
+overlay	platform/allwinner/wireless/firmware/aic8800/sdio/aic8800d80/fmacfw_8800d80_u02.bin	AIC8800D80 firmware
+overlay	platform/allwinner/wireless/firmware/aic8800/sdio/aic8800d80/fw_adid_8800d80_u02.bin	AIC8800D80 firmware data
+overlay	platform/allwinner/wireless/firmware/aic8800/sdio/aic8800d80/fw_patch_8800d80_u02.bin	AIC8800D80 firmware patch
+overlay	platform/allwinner/wireless/firmware/aic8800/sdio/aic8800d80/fw_patch_table_8800d80_u02.bin	AIC8800D80 firmware patch table
+overlay	platform/allwinner/wireless/firmware/aic8800/sdio/aic8800d80/lmacfw_rf_8800d80_u02.bin	AIC8800D80 RF firmware
 documentation	docs/wlan-bluetooth-bringup.md	WLAN, Bluetooth HCI and audio bring-up record
 documentation	docs/bluetooth-speaker-change-set.md	Bluetooth speaker delivery notes and verification
 tool	scripts/verify_bluetooth_speaker.sh	Delivery and target-SDK consistency checker

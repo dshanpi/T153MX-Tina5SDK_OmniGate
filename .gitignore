@@ -1,5 +1,7 @@
 # Prerequisites
 *.d
+!**/etc/init.d/
+!**/etc/init.d/**
 
 # Object files
 *.o

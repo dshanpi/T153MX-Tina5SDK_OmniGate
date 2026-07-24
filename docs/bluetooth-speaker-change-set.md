@@ -15,10 +15,27 @@
   名称而出现“看似启动、实际无声”。
 - `stop` 会停止用户态音频服务、关闭输出通路并关闭蓝牙控制器。
 
+## 从默认 SDK 应用后的结果
+
+| 项目 | 默认 SDK + 本 overlay |
+| --- | --- |
+| Buildroot rootfs overlay | 由 `sun8iw22p1_t153_mmc_defconfig` 指向 OmniGate rootfs overlay |
+| BlueZ/BlueALSA/ALSA 工具 | 已在 defconfig 中启用 |
+| AIC8800D80 固件 | 已选择 AIC8800 SDIO firmware，并由 overlay 提供板级固件 |
+| 蓝牙音响控制脚本 | 安装到 `/usr/bin/bt-speaker` |
+| 蓝牙编码 | SBC-only |
+| 实际播放 | 一加 13 实板验证正常 |
+| aptX/aptX HD | 构建时禁用，当前内核组合不能正常接收 |
+
+因此，从默认 SDK 应用本 overlay 后，可以编译出当前已经正常出声的 SBC
+版本；不能编译出“aptX 正常出声”的版本。此前测试过的 aptX 二进制只证明
+codec 能注册和协商，播放时仍会断流，不属于可交付功能。
+
 ## Overlay 文件清单
 
 | Tina SDK 相对路径 | 用途 |
 | --- | --- |
+| `buildroot/buildroot-202205/configs/sun8iw22p1_t153_mmc_defconfig` | 选择 rootfs overlay、BlueALSA、ALSA 工具、BlueZ 工具和 AIC8800 固件 |
 | `device/config/chips/t153/configs/omnigate/buildroot/overlay/etc/init.d/S45aic8800-bluetooth` | 加载 AIC 模块、控制 rfkill/BT_WAKE，并用 vendor `hciattach` 初始化 UART HCI |
 | `device/config/chips/t153/configs/omnigate/buildroot/overlay/usr/bin/bt-speaker` | 蓝牙音响 start/stop/restart/status 主控脚本 |
 | `device/config/chips/t153/configs/omnigate/buildroot/overlay/etc/bluetooth/bt-speaker.conf` | 独立 BlueZ 音响配置，不修改系统默认 `main.conf` |
@@ -26,6 +43,7 @@
 | `buildroot/buildroot-202205/package/bluez-alsa/bluez-alsa.mk` | 明确构建为 SBC-only，关闭实板不可用的 aptX/aptX HD endpoint |
 | `device/config/chips/t153/configs/omnigate/linux-5.10-origin/board.dts` | 配置 AIC 蓝牙 PCM 使用的 I2S0 PB5～PB8 pinmux |
 | `bsp/drivers/net/wireless/aic8800/aic8800_btlpm/aic8800_btlpm.c` | AIC 蓝牙低功耗/BT_WAKE 板级配合 |
+| `platform/allwinner/wireless/firmware/aic8800/sdio/aic8800d80/` | AIC8800D80 板级 Wi-Fi/蓝牙组合固件和用户配置 |
 
 仓库内的精确清单另见
 [`meta/bluetooth-speaker-files.tsv`](../meta/bluetooth-speaker-files.tsv)。
