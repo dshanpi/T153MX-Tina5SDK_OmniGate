@@ -1,12 +1,12 @@
 {
   "root": "/home/ubuntu/T153MX/T153_Tina_V1.0",
-  "package": "/home/ubuntu/T153MX/T153_Tina_V1.0/t153mx-ominigate-v1",
-  "overlay_files": 58,
-  "delete_entries": 13,
+  "package": "/home/ubuntu/T153MX/T153_Tina_V1.0/t153mx-ominigate-v1.4",
+  "overlay_files": 83,
+  "delete_entries": 0,
   "skipped_entries": 0,
   "exclude_top": [
     "bak",
-    "t153mx-ominigate-v1",
+    "t153mx-ominigate-v1.4",
     "out"
   ],
   "exclude_prefixes": [

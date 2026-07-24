@@ -1,5 +1,13 @@
+project brandy/brandy-2.0/u-boot-bsp/           (*** NO BRANCH ***)
+ -m	board/sunxi/board.c
 project bsp/                                    (*** NO BRANCH ***)
+ -m	drivers/drm/panel/panel-dsi.c
+ -m	drivers/drm/sunxi_device/hardware/lowlevel_lcd/dsi_v1.c
  -m	drivers/net/wireless/aic8800/aic8800_btlpm/aic8800_btlpm.c
+project buildroot/buildroot-202205/             (*** NO BRANCH ***)
+ -m	configs/sun8iw22p1_t153_mmc_defconfig
+ --	dl/libopenaptx/libopenaptx-0.2.1.tar.gz
+ -m	package/bluez-alsa/bluez-alsa.mk
 project device/config/chips/t153/               (*** NO BRANCH ***)
  -m	bin/amp_rv0.bin
  --	bin/u-boot-dtb.fex
@@ -7,6 +15,10 @@ project device/config/chips/t153/               (*** NO BRANCH ***)
  --	configs/omnigate/BoardConfig.mk
  --	configs/omnigate/buildroot/BoardConfig.mk
  --	configs/omnigate/buildroot/env.cfg
+ --	configs/omnigate/buildroot/overlay/etc/asound.conf
+ --	configs/omnigate/buildroot/overlay/etc/bluetooth/bt-speaker.conf
+ --	configs/omnigate/buildroot/overlay/etc/init.d/S45aic8800-bluetooth
+ --	configs/omnigate/buildroot/overlay/usr/bin/bt-speaker
  --	configs/omnigate/buildroot/swupdate/sw-description-ab-emmc
  --	configs/omnigate/buildroot/swupdate/sw-subimgs-ab-emmc.cfg
  --	configs/omnigate/buildroot/sys_partition.fex
@@ -17,6 +29,7 @@ project device/config/chips/t153/               (*** NO BRANCH ***)
  --	configs/omnigate/dtbo/sunxi_board1.dts
  --	configs/omnigate/dtbo/sunxi_board2.dts
  --	configs/omnigate/linux-5.10-origin/board.dts
+ --	configs/omnigate/linux-5.10-origin/board.dts.bak.20260722_041543
  --	configs/omnigate/linux-5.10-origin/bsp_defconfig
  --	configs/omnigate/linux-5.10-origin/buildroot_linux_defconfig
  --	configs/omnigate/linux-5.10-rt/board.dts
@@ -25,27 +38,11 @@ project device/config/chips/t153/               (*** NO BRANCH ***)
  --	configs/omnigate/sys_config.fex
  --	configs/omnigate/sys_partition.fex
  --	configs/omnigate/uboot-board.dts
-project buildroot/buildroot-202205/             (*** NO BRANCH ***)
- -m	configs/sun8iw22p1_t153_mmc_defconfig
 project platform/allwinner/wireless/firmware/   (*** NO BRANCH ***)
- -d	aic8800/sdio/aic8800d80/aic_userconfig_8800d80-Typ.txt
  --	aic8800/sdio/aic8800d80/aic_userconfig_8800d80.txt
- -d	aic8800/sdio/aic8800d80/fmacfw_8800d80.bin
- -d	aic8800/sdio/aic8800d80/fmacfw_8800d80_h_u02.bin
  -m	aic8800/sdio/aic8800d80/fmacfw_8800d80_u02.bin
- -d	aic8800/sdio/aic8800d80/fmacfw_rf_8800d80.bin
- -d	aic8800/sdio/aic8800d80/fmacfw_rf_8800d80_u02.bin
- -d	aic8800/sdio/aic8800d80/fw_adid_8800d80.bin
- -m	aic8800/sdio/aic8800d80/fw_adid_8800d80_u02.bin
- -d	aic8800/sdio/aic8800d80/fw_adid_8800d80_u04.bin
- -d	aic8800/sdio/aic8800d80/fw_patch_8800d80.bin
  -m	aic8800/sdio/aic8800d80/fw_patch_8800d80_u02.bin
- -d	aic8800/sdio/aic8800d80/fw_patch_8800d80_u02_ext0.bin
- -d	aic8800/sdio/aic8800d80/fw_patch_8800d80_u04.bin
- -d	aic8800/sdio/aic8800d80/fw_patch_table_8800d80.bin
  -m	aic8800/sdio/aic8800d80/fw_patch_table_8800d80_u02.bin
- -d	aic8800/sdio/aic8800d80/fw_patch_table_8800d80_u04.bin
- -d	aic8800/sdio/aic8800d80/lmacfw_rf_8800d80.bin
  -m	aic8800/sdio/aic8800d80/lmacfw_rf_8800d80_u02.bin
 project tools/                                  (*** NO BRANCH ***)
  --	OpenixCLI/LICENSE
@@ -53,6 +50,15 @@ project tools/                                  (*** NO BRANCH ***)
  --	OpenixCLI/openixcli
  --	OpenixCLI/openixcli-v0.1.9-x86_64-unknown-linux-gnu.deb
  --	OpenixCLI/openixcli.desktop
+ --	pj10_diag/Makefile
+ --	pj10_diag/Module.symvers
+ --	pj10_diag/modules.order
+ --	pj10_diag/pj10_diag.c
+ --	pj10_diag/pj10_diag.ko
+ --	pj10_diag/pj10_diag.mod
+ --	pj10_diag/pj10_diag.mod.c
+ --	pj10_diag/pj10_diag.mod.o
+ --	pj10_diag/pj10_diag.o
  --	serial_agent/README.md
  --	serial_agent/README_AGENT_DAEMON.md
  --	serial_agent/auto_flash_verify.py
