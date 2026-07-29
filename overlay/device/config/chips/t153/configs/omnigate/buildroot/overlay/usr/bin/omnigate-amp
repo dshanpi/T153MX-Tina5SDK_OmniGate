@@ -1,0 +1,159 @@
+#!/bin/sh
+set -eu
+
+WAIT_SECONDS=${OMNIGATE_AMP_WAIT_SECONDS:-10}
+
+find_remoteproc()
+{
+	for rproc in /sys/class/remoteproc/remoteproc*; do
+		[ -d "$rproc" ] || continue
+		name=$(cat "$rproc/name" 2>/dev/null || true)
+		firmware=$(cat "$rproc/firmware" 2>/dev/null || true)
+		case "$name $firmware" in
+			*e907*|*E907*|*amp_rv0.bin*)
+				printf '%s\n' "$rproc"
+				return 0
+				;;
+		esac
+	done
+	return 1
+}
+
+find_ctrl()
+{
+	for ctrl in /dev/rpmsg_ctrl-* /dev/rpmsg_ctrl[0-9]*; do
+		[ -c "$ctrl" ] || continue
+		printf '%s\n' "$ctrl"
+		return 0
+	done
+	return 1
+}
+
+wait_for()
+{
+	check=$1
+	left=$WAIT_SECONDS
+	while [ "$left" -gt 0 ]; do
+		if "$check"; then
+			return 0
+		fi
+		sleep 1
+		left=$((left - 1))
+	done
+	return 1
+}
+
+show_status()
+{
+	found=0
+	for rproc in /sys/class/remoteproc/remoteproc*; do
+		[ -d "$rproc" ] || continue
+		found=1
+		printf '%s name=%s firmware=%s state=%s\n' \
+			"$rproc" \
+			"$(cat "$rproc/name" 2>/dev/null || echo unknown)" \
+			"$(cat "$rproc/firmware" 2>/dev/null || echo unknown)" \
+			"$(cat "$rproc/state" 2>/dev/null || echo unknown)"
+	done
+	if [ "$found" -eq 0 ]; then
+		echo "No remoteproc device found." >&2
+		return 1
+	fi
+
+	echo "RPMsg control devices:"
+	for ctrl in /dev/rpmsg_ctrl-* /dev/rpmsg_ctrl[0-9]*; do
+		[ -c "$ctrl" ] && echo "  $ctrl"
+	done
+	echo "RPMsg endpoint devices:"
+	for ept in /dev/rpmsg[0-9]*; do
+		[ -c "$ept" ] && echo "  $ept"
+	done
+}
+
+start_e907()
+{
+	rproc=$(find_remoteproc) || {
+		echo "E907 remoteproc was not found." >&2
+		return 1
+	}
+	firmware=$(cat "$rproc/firmware" 2>/dev/null || true)
+	if [ "$firmware" != "amp_rv0.bin" ]; then
+		echo "Unexpected E907 firmware: ${firmware:-unknown}" >&2
+		echo "Expected amp_rv0.bin; refusing to start a different image." >&2
+		return 1
+	fi
+
+	state=$(cat "$rproc/state")
+	if [ "$state" != "running" ]; then
+		echo start > "$rproc/state"
+	fi
+	if ! wait_for find_ctrl >/dev/null; then
+		echo "E907 is running but no RPMsg control device appeared in ${WAIT_SECONDS}s." >&2
+		show_status >&2 || true
+		return 1
+	fi
+	printf 'E907 running: %s\n' "$rproc"
+	find_ctrl
+}
+
+usage()
+{
+	cat <<'EOF'
+Usage:
+  omnigate-amp status
+  omnigate-amp start
+  omnigate-amp stop
+  omnigate-amp shell [RPMSG_CTRL_DEVICE]
+  omnigate-amp exec COMMAND [RPMSG_CTRL_DEVICE]
+  omnigate-amp diagnose
+
+The shell and exec commands start the E907 first when necessary.
+EOF
+}
+
+action=${1:-status}
+case "$action" in
+	status)
+		show_status
+		;;
+	start)
+		start_e907
+		;;
+	stop)
+		rproc=$(find_remoteproc) || {
+			echo "E907 remoteproc was not found." >&2
+			exit 1
+		}
+		if [ "$(cat "$rproc/state")" = "running" ]; then
+			echo stop > "$rproc/state"
+		fi
+		cat "$rproc/state"
+		;;
+	shell)
+		start_e907 >/dev/null
+		ctrl=${2:-$(find_ctrl)}
+		exec amp_shell -d "$ctrl"
+		;;
+	exec)
+		[ "$#" -ge 2 ] || {
+			usage >&2
+			exit 2
+		}
+		command_text=$2
+		start_e907 >/dev/null
+		ctrl=${3:-$(find_ctrl)}
+		exec amp_shell -e "$command_text" -d "$ctrl"
+		;;
+	diagnose)
+		show_status || true
+		echo "Kernel messages:"
+		dmesg | grep -Ei 'remoteproc|rpmsg|virtio|msgbox|e907|share.?irq' | tail -n 200
+		;;
+	-h|--help|help)
+		usage
+		;;
+	*)
+		usage >&2
+		exit 2
+		;;
+esac

@@ -55,6 +55,7 @@
 
 - [工业网关集成与操作说明](./industrial-gateway-integration.md)
 - [2026-07-29 EtherCAT/CANopen 续作记录](./industrial-gateway-development-2026-07-29.md)
+- [A7 Linux 与 E907 FreeRTOS 核间通信记录](./a7-e907-rpmsg-development-2026-07-29.md)
 - [完整构建、烧录及历史验证记录](./build-flash-verification-2026-07-24.md)
 
 ## 已完成验证
@@ -63,10 +64,11 @@
 - `omnigate-ethercat` 使用 ARM hard-float 工具链和
   `-Wall -Wextra -Werror` 编译通过。
 - Buildroot 包构建、完整系统构建和 `pack` 均成功。
-- 最终镜像：`out/t153_linux_omnigate_uart0.img`
-- 镜像大小：`529254400` bytes
+- 最新镜像（含 amp_shell/RPMsg 兼容修复）：
+  `out/t153_linux_omnigate_uart0.img`
+- 镜像大小：`529295360` bytes
 - SHA-256：
-  `c512212d77681261270839af4efcfeb1247c37eba698d9beaef08b6d6142dd88`
+  `76f64efa46c7f0dc0b5689f5c2b443dc86a2088785065ae77199ece253073058`
 
 固件约 505 MiB，超过 GitHub 普通 Git 单文件限制，因此不提交到本仓库。使用本
 分支应用 overlay 后可重建同一软件配置；以上 SHA-256 用于核对此次本地备份镜像。
