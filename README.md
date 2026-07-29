@@ -72,9 +72,15 @@ t153mx-ominigate-v1/
 ```sh
 # 假设 Tina SDK 在 /path/to/TinaSDK
 /path/to/t153mx-ominigate-v1/scripts/apply_overlay.sh /path/to/TinaSDK
+
+# 校验 A7 Linux / E907 remoteproc、RPMsg 与 amp_shell 集成
+/path/to/t153mx-ominigate-v1/scripts/verify_amp_e907.sh /path/to/TinaSDK
 ```
 
 脚本会把 `overlay/` 下所有文件按相对路径 tar 拷贝到目标 SDK，**不执行任何删除动作**。
+
+`ampcpudev` 分支的异构核通信实现、构建结果和板端验收命令见
+[A7 Linux 与 E907 FreeRTOS 核间通信](./docs/a7-e907-rpmsg-development.md)。
 
 ### 2. （可选）清理已被替换的旧固件
 
