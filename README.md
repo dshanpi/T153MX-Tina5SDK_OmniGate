@@ -144,8 +144,6 @@ tools/OpenixCLI/openixcli flash --verify true --mode full_erase \
 验收清单见 [2026-07-29 续作记录](./docs/industrial-gateway-development-2026-07-29.md)。
 分支所含代码、配置、构建结果及待验项目汇总在
 [Gateway CANopen / EtherCAT 交付清单](./docs/gateway-canopen-ethercat-change-set.md)。
-A7 Linux 与 E907 FreeRTOS 的 remoteproc/RPMsg/amp_shell 实现及验收命令见
-[异构核通信记录](./docs/a7-e907-rpmsg-development-2026-07-29.md)。
 
 串口调试建议使用自带的 serial_agent（独占式串口代理，避免多人/多终端抢占 `/dev/ttyACM0`）：
 
