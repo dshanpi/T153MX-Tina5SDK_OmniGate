@@ -1,0 +1,62 @@
+From 9c96df16bfc280d509131664645352a64422956a Mon Sep 17 00:00:00 2001
+From: OmniGate SDK Integration <sdk@omnigate.local>
+Date: Fri, 24 Jul 2026 10:30:00 -0400
+Subject: [PATCH] embedded: disable runtime package installs
+
+Firmware dependencies must be supplied by Buildroot. Do not mutate the
+root filesystem or access PyPI when a disabled connector is imported.
+Use the Python standard library for file-storage base64 operations.
+
+Signed-off-by: OmniGate SDK Integration <sdk@omnigate.local>
+---
+ thingsboard_gateway/storage/file/event_storage_reader.py | 2 +-
+ thingsboard_gateway/storage/file/event_storage_writer.py | 2 +-
+ thingsboard_gateway/tb_utility/tb_utility.py             | 7 +++++++
+ 3 files changed, 9 insertions(+), 2 deletions(-)
+
+diff --git a/thingsboard_gateway/storage/file/event_storage_reader.py b/thingsboard_gateway/storage/file/event_storage_reader.py
+index 1a95e00..53ba85a 100644
+--- a/thingsboard_gateway/storage/file/event_storage_reader.py
++++ b/thingsboard_gateway/storage/file/event_storage_reader.py
+@@ -12,7 +12,7 @@
+ #     See the License for the specific language governing permissions and
+ #     limitations under the License.
+ 
+-from pybase64 import b64decode
++from base64 import b64decode
+ from io import BufferedReader, FileIO
+ from os import remove
+ from os.path import exists
+diff --git a/thingsboard_gateway/storage/file/event_storage_writer.py b/thingsboard_gateway/storage/file/event_storage_writer.py
+index b0b28c6..7379bf4 100644
+--- a/thingsboard_gateway/storage/file/event_storage_writer.py
++++ b/thingsboard_gateway/storage/file/event_storage_writer.py
+@@ -12,7 +12,7 @@
+ #     See the License for the specific language governing permissions and
+ #     limitations under the License.
+ 
+-from pybase64 import b64encode
++from base64 import b64encode
+ from io import BufferedWriter, FileIO
+ from os import O_CREAT, O_EXCL, close as os_close, linesep, open as os_open, listdir
+ from os.path import exists
+diff --git a/thingsboard_gateway/tb_utility/tb_utility.py b/thingsboard_gateway/tb_utility/tb_utility.py
+index cee4934..c132ef4 100644
+--- a/thingsboard_gateway/tb_utility/tb_utility.py
++++ b/thingsboard_gateway/tb_utility/tb_utility.py
+@@ -257,6 +257,13 @@ class TBUtility:
+ 
+     @staticmethod
+     def install_package(package, version="upgrade", force_install=False):
++        allow_runtime_pip = environ.get("TB_GW_ALLOW_RUNTIME_PIP", "false").lower()
++        if allow_runtime_pip not in ("1", "true", "yes"):
++            getLogger("service").error(
++                "Runtime package installation is disabled; missing package: %s %s",
++                package, version
++            )
++            return False
+         from sys import executable, prefix, base_prefix, modules
+         from subprocess import check_call
+         import site
+-- 
+2.43.0

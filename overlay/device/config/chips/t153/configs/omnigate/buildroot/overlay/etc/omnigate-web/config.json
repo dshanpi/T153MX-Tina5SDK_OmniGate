@@ -1,0 +1,47 @@
+{
+  "auth": {
+    "username": "admin",
+    "salt": "omnigate-v1",
+    "password_hash": "9054c1d12f61c3ab978ed0054f2967f5a7eaf2fd108e1dc1aca6a7029fcbba4e",
+    "must_change": true
+  },
+  "can": {
+    "can0": {
+      "bitrate": 500000,
+      "data_bitrate": 2000000,
+      "fd": false,
+      "restart_ms": 100
+    },
+    "can1": {
+      "bitrate": 500000,
+      "data_bitrate": 2000000,
+      "fd": false,
+      "restart_ms": 100
+    }
+  },
+  "canopen": {
+    "interface": "can0",
+    "bitrate": 500000,
+    "nodes": {}
+  },
+  "ec20": {
+    "profiles": {
+      "ec20a": {
+        "device": "/dev/cdc-wdm0",
+        "interface": "wwan0",
+        "apn": "",
+        "username": "",
+        "password": "",
+        "auth": "none"
+      },
+      "ec20b": {
+        "device": "/dev/cdc-wdm1",
+        "interface": "wwan1",
+        "apn": "",
+        "username": "",
+        "password": "",
+        "auth": "none"
+      }
+    }
+  }
+}

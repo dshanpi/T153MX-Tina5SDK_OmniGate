@@ -1,0 +1,11 @@
+config BR2_PACKAGE_OMNIGATE_ETHERCAT
+	bool "omnigate-ethercat"
+	depends on BR2_TOOLCHAIN_HAS_THREADS
+	select BR2_PACKAGE_SOEM
+	help
+	  Structured EtherCAT diagnostics for the OmniGate management UI.
+	  Provides slave inventory, CoE SDO upload/download and a bounded
+	  cyclic process-data/WKC test on the dedicated EtherCAT interface.
+
+comment "omnigate-ethercat needs a toolchain w/ threads"
+	depends on !BR2_TOOLCHAIN_HAS_THREADS

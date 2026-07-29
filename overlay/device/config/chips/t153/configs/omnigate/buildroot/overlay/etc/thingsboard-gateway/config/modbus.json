@@ -1,0 +1,36 @@
+{
+  "master": {
+    "slaves": [
+      {
+        "deviceName": "OmniGate-RS485-Device-1",
+        "deviceType": "default",
+        "type": "serial",
+        "port": "/dev/ttyAS5",
+        "method": "rtu",
+        "baudrate": 9600,
+        "stopbits": 1,
+        "bytesize": 8,
+        "parity": "N",
+        "timeout": 2,
+        "retries": 3,
+        "pollPeriod": 1000,
+        "unitId": 1,
+        "byteOrder": "BIG",
+        "wordOrder": "BIG",
+        "sendDataOnlyOnChange": true,
+        "attributes": [],
+        "timeseries": [
+          {
+            "tag": "holding_register_0",
+            "type": "16uint",
+            "functionCode": 3,
+            "objectsCount": 1,
+            "address": 0
+          }
+        ],
+        "attributeUpdates": [],
+        "rpc": []
+      }
+    ]
+  }
+}

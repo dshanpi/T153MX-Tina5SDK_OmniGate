@@ -1,0 +1,27 @@
+{
+  "interface": "socketcan",
+  "channel": "can1",
+  "backend": {
+    "fd": true
+  },
+  "reconnectPeriod": 5,
+  "devices": [
+    {
+      "name": "OmniGate-CAN1-Device",
+      "sendDataOnlyOnChange": true,
+      "enableUnknownRpc": false,
+      "strictEval": true,
+      "attributes": [],
+      "timeseries": [
+        {
+          "key": "can1_payload",
+          "nodeId": 257,
+          "isExtendedId": false,
+          "value": "0:-1:big:raw"
+        }
+      ],
+      "attributeUpdates": [],
+      "serverSideRpc": []
+    }
+  ]
+}

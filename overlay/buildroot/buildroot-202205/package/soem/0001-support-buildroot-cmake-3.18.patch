@@ -1,0 +1,43 @@
+From 36e07c77d69e4ecce0544f82cb7bc171f3abdc16 Mon Sep 17 00:00:00 2001
+From: OmniGate SDK Integration <sdk@omnigate.local>
+Date: Fri, 24 Jul 2026 10:00:00 -0400
+Subject: [PATCH] support Buildroot CMake 3.18
+
+SOEM only uses CMake features available in 3.18 in this build. Lower the
+declared minimum so the Tina 5.0 Buildroot host-cmake can configure it.
+
+Signed-off-by: OmniGate SDK Integration <sdk@omnigate.local>
+---
+ CMakeLists.txt | 10 ++++++----
+ 1 file changed, 6 insertions(+), 4 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index ad53013..e4371a0 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -2,7 +2,7 @@
+ # license. See the file LICENSE.md distributed with this software for
+ # full license information.
+ 
+-cmake_minimum_required(VERSION 3.28)
++cmake_minimum_required(VERSION 3.18)
+ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+ project(SOEM VERSION 2.0.0 LANGUAGES C)
+ 
+@@ -148,9 +148,11 @@ if(SOEM_BUILD_SAMPLES)
+     add_subdirectory(samples/eoe_test)
+   endif()
+ 
+-  find_package (Python3 QUIET)
+-  if (Python3_FOUND)
+-    add_subdirectory(samples/eni_test)
++  if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.20)
++    find_package (Python3 QUIET)
++    if (Python3_FOUND)
++      add_subdirectory(samples/eni_test)
++    endif()
+   endif()
+ endif()
+ 
+-- 
+2.43.0

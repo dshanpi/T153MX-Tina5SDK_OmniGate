@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>OmniGate 工业网关</title>
+  <style>
+    :root{--bg:#09111f;--panel:#111d30;--panel2:#16243a;--line:#263b58;--text:#e8f0fa;--muted:#91a4bb;--cyan:#34d3c5;--blue:#4e8cff;--orange:#ffb14e;--red:#ff6b78;--green:#64dc91;--shadow:0 18px 48px #02060d88}
+    *{box-sizing:border-box} body{margin:0;background:radial-gradient(circle at 10% 0,#163451 0,transparent 34%),var(--bg);color:var(--text);font:14px/1.55 system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif}
+    button,input,select,textarea{font:inherit} button{cursor:pointer}.hidden{display:none!important}
+    .login{position:fixed;inset:0;z-index:20;display:grid;place-items:center;background:#07101dee;padding:20px}.login-card{width:min(420px,100%);padding:32px;border:1px solid var(--line);border-radius:20px;background:linear-gradient(145deg,#172944,#0e192a);box-shadow:var(--shadow)}.brand{display:flex;align-items:center;gap:13px}.mark{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,var(--cyan),var(--blue));box-shadow:0 0 28px #34d3c566}.brand h1{font-size:20px;margin:0}.brand small{color:var(--muted)}.login-card h2{margin:32px 0 8px;font-size:27px}.login-card p{color:var(--muted)}.login-card label{display:block;margin:16px 0 6px}.login-card button{width:100%;margin-top:22px}.hint{font-size:12px!important}
+    header{height:68px;position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:0 24px;background:#0b1626e8;backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}.top-actions{display:flex;gap:10px;align-items:center}.dot{width:9px;height:9px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green)}
+    .layout{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - 68px)}nav{padding:20px 12px;border-right:1px solid var(--line);background:#0b1524}nav button{width:100%;display:flex;align-items:center;gap:10px;border:0;border-radius:10px;background:none;color:var(--muted);padding:11px 14px;text-align:left;margin:3px 0}nav button:hover,nav button.active{color:#fff;background:#1a2b45}nav button.active{box-shadow:inset 3px 0 var(--cyan)}main{padding:26px;max-width:1500px;width:100%;margin:auto}.page{display:none}.page.active{display:block}.page-head{display:flex;align-items:end;justify-content:space-between;margin-bottom:22px}.page-head h2{font-size:26px;margin:0}.page-head p{margin:4px 0 0;color:var(--muted)}
+    .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}.card{grid-column:span 6;background:linear-gradient(145deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:15px;padding:20px;box-shadow:0 8px 24px #03081233}.card.full{grid-column:1/-1}.card.third{grid-column:span 4}.card h3{margin:0 0 16px;font-size:16px}.card-title{display:flex;justify-content:space-between;align-items:center}.badge{display:inline-flex;align-items:center;border:1px solid #38615d;color:var(--cyan);border-radius:999px;padding:2px 9px;font-size:12px}.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.metric{background:#0b1728;border:1px solid #203650;padding:14px;border-radius:12px}.metric span{color:var(--muted);font-size:12px}.metric strong{display:block;margin-top:5px;font-size:16px;overflow-wrap:anywhere}
+    .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.field{display:flex;flex-direction:column;gap:5px}.field.full{grid-column:1/-1}.field label{color:var(--muted);font-size:12px}.input,input,select,textarea{width:100%;border:1px solid #314866;border-radius:8px;background:#091524;color:var(--text);padding:9px 11px;outline:none}input:focus,select:focus,textarea:focus{border-color:var(--cyan);box-shadow:0 0 0 3px #34d3c51c}textarea{min-height:100px;resize:vertical}.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:16px}.btn{border:1px solid #35506f;border-radius:8px;background:#192b44;color:#e9f1fa;padding:8px 14px}.btn:hover{background:#213854}.btn.primary{border-color:#36cabc;background:#1b716d}.btn.primary:hover{background:#218b84}.btn.danger{border-color:#79424c;background:#542632}.btn.small{padding:5px 9px;font-size:12px}.switch{display:flex;align-items:center;gap:8px}.switch input{width:auto}.output{background:#050b13;border:1px solid #263a53;border-radius:9px;padding:12px;min-height:70px;white-space:pre-wrap;overflow:auto;max-height:390px;color:#bcd0e3;font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace}.node-list{display:flex;gap:8px;flex-wrap:wrap}.node{padding:7px 11px;border-radius:8px;background:#123a3a;color:#7ce3d9;border:1px solid #28645f}.notice{padding:11px 13px;border-left:3px solid var(--orange);background:#2b2117;color:#ffd9a8;border-radius:6px}.toast{position:fixed;right:20px;bottom:20px;z-index:30;max-width:420px;padding:12px 16px;border-radius:10px;background:#173427;border:1px solid #397d58;box-shadow:var(--shadow);transform:translateY(100px);opacity:0;transition:.25s}.toast.show{transform:none;opacity:1}.toast.error{background:#3b1d25;border-color:#884653}.spinner{display:inline-block;width:13px;height:13px;border:2px solid #ffffff55;border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+    @media(max-width:900px){.layout{grid-template-columns:1fr}nav{position:sticky;top:68px;z-index:8;display:flex;overflow:auto;padding:8px;border-right:0;border-bottom:1px solid var(--line)}nav button{width:auto;white-space:nowrap}.card,.card.third{grid-column:1/-1}.metrics{grid-template-columns:repeat(2,1fr)}main{padding:18px}}@media(max-width:560px){header{padding:0 14px}.brand small{display:none}.form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}.metrics{grid-template-columns:1fr 1fr}.page-head{align-items:start;flex-direction:column;gap:10px}}
+  </style>
+</head>
+<body>
+  <div id="login" class="login">
+    <form id="loginForm" class="login-card">
+      <div class="brand"><div class="mark"></div><div><h1>OmniGate</h1><small>T153MX Industrial Edge</small></div></div>
+      <h2>网关管理登录</h2><p>登录后可配置现场总线、云平台和蜂窝网络。</p>
+      <label>用户名</label><input id="loginUser" value="admin" autocomplete="username">
+      <label>密码</label><input id="loginPass" type="password" autocomplete="current-password">
+      <button class="btn primary" type="submit">登录</button>
+      <p class="hint">首次登录：admin / omnigate。请登录后立即修改密码。</p>
+    </form>
+  </div>
+
+  <header>
+    <div class="brand"><div class="mark"></div><div><h1>OmniGate</h1><small>工业边缘网关控制台</small></div></div>
+    <div class="top-actions"><span class="dot"></span><span id="clock">--</span><button class="btn small" onclick="logout()">退出</button></div>
+  </header>
+  <div class="layout">
+    <nav>
+      <button class="active" data-page="dashboard">● 总览</button>
+      <button data-page="cloud">☁ 云与 RS485</button>
+      <button data-page="can">↔ CAN / CANopen</button>
+      <button data-page="ethercat">◇ EtherCAT</button>
+      <button data-page="cellular">▥ 双 EC20</button>
+      <button data-page="services">⚙ 服务与日志</button>
+    </nav>
+    <main>
+      <section id="dashboard" class="page active">
+        <div class="page-head"><div><h2>运行总览</h2><p>接口、服务与网络状态</p></div><button class="btn" onclick="loadStatus()">刷新</button></div>
+        <div class="metrics">
+          <div class="metric"><span>主机</span><strong id="mHost">--</strong></div>
+          <div class="metric"><span>系统时间</span><strong id="mTime">--</strong></div>
+          <div class="metric"><span>ThingsBoard</span><strong id="mTB">--</strong></div>
+          <div class="metric"><span>管理页面</span><strong id="mWeb">--</strong></div>
+        </div>
+        <div class="grid" style="margin-top:16px">
+          <div class="card full"><h3>网络接口</h3><pre id="addresses" class="output">加载中…</pre></div>
+          <div id="passwordNotice" class="card full hidden"><div class="notice">正在使用初始密码。请在“服务与日志”页面修改管理密码。</div></div>
+        </div>
+      </section>
+
+      <section id="cloud" class="page">
+        <div class="page-head"><div><h2>云平台与 RS485</h2><p>ThingsBoard Gateway 和一路 Modbus RTU</p></div></div>
+        <div class="grid">
+          <div class="card">
+            <div class="card-title"><h3>ThingsBoard</h3><span id="tbBadge" class="badge">未配置</span></div>
+            <div class="form-grid">
+              <div class="field full"><label>服务器地址</label><input id="tbHost" placeholder="thingsboard.cloud"></div>
+              <div class="field"><label>MQTT 端口</label><input id="tbPort" type="number" value="1883"></div>
+              <div class="field"><label>Gateway Token</label><input id="tbToken" type="password" placeholder="留空则保持原 Token"></div>
+              <label class="switch field full"><input id="tbEnabled" type="checkbox">开机启用 ThingsBoard Gateway</label>
+            </div>
+            <div class="actions"><button class="btn primary" onclick="saveTB(false)">保存</button><button class="btn" onclick="saveTB(true)">保存并重启</button></div>
+          </div>
+          <div class="card">
+            <h3>Modbus RTU</h3>
+            <div class="form-grid">
+              <div class="field"><label>串口</label><input id="rsPort" value="/dev/ttyAS5"></div>
+              <div class="field"><label>波特率</label><select id="rsBaud"><option>9600</option><option>19200</option><option>38400</option><option>57600</option><option>115200</option></select></div>
+              <div class="field"><label>站号</label><input id="rsUnit" type="number" min="1" max="247"></div>
+              <div class="field"><label>校验</label><select id="rsParity"><option>N</option><option>E</option><option>O</option></select></div>
+              <div class="field"><label>数据位</label><select id="rsBits"><option>8</option><option>7</option></select></div>
+              <div class="field"><label>停止位</label><select id="rsStop"><option>1</option><option>2</option></select></div>
+              <div class="field full"><label>轮询周期（ms）</label><input id="rsPoll" type="number"></div>
+            </div>
+            <div class="actions"><button class="btn primary" onclick="saveRS485()">保存 RTU 参数</button></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="can" class="page">
+        <div class="page-head"><div><h2>CAN / CANopen 主站</h2><p>SocketCAN、CiA 301、EDS、NMT、SDO 与 PDO</p></div><button class="btn" onclick="loadCAN()">刷新接口</button></div>
+        <div class="grid">
+          <div class="card">
+            <h3>CAN 接口</h3>
+            <div class="form-grid">
+              <div class="field"><label>接口</label><select id="canIf"><option>can0</option><option>can1</option></select></div>
+              <div class="field"><label>仲裁波特率</label><select id="canBitrate"><option>125000</option><option>250000</option><option selected>500000</option><option>1000000</option></select></div>
+              <div class="field"><label>数据波特率（CAN-FD）</label><input id="canDataBitrate" type="number" value="2000000"></div>
+              <div class="field"><label>Bus-off 恢复（ms）</label><input id="canRestart" type="number" value="100"></div>
+              <label class="switch field full"><input id="canFD" type="checkbox">启用 CAN-FD（CANopen 操作会自动切回 Classic CAN）</label>
+            </div>
+            <div class="actions"><button class="btn primary" onclick="applyCAN()">应用接口</button></div>
+            <pre id="canState" class="output">--</pre>
+          </div>
+          <div class="card">
+            <h3>EDS / DCF</h3>
+            <div class="form-grid">
+              <div class="field full"><label>文件</label><input id="edsFile" type="file" accept=".eds,.dcf"></div>
+              <div class="field"><label>绑定节点 ID（可选）</label><input id="edsNode" type="number" min="1" max="127"></div>
+              <div class="field"><label>当前主站接口</label><select id="coIf"><option>can0</option><option>can1</option></select></div>
+            </div>
+            <div class="actions"><button class="btn primary" onclick="uploadEDS()">上传并校验</button><button class="btn" onclick="loadEDS()">刷新列表</button></div>
+            <pre id="edsList" class="output">尚无文件</pre>
+          </div>
+          <div class="card full">
+            <div class="card-title"><h3>节点扫描与 NMT</h3><span class="badge">CANopen Classic</span></div>
+            <div class="form-grid">
+              <div class="field"><label>波特率</label><select id="coBitrate"><option>125000</option><option>250000</option><option selected>500000</option><option>1000000</option></select></div>
+              <div class="field"><label>目标节点（0 = 广播）</label><input id="coNode" type="number" min="0" max="127" value="0"></div>
+              <div class="field"><label>NMT 状态</label><select id="nmtState"><option>OPERATIONAL</option><option>PRE-OPERATIONAL</option><option>STOPPED</option><option>RESET</option><option>RESET COMMUNICATION</option></select></div>
+            </div>
+            <div class="actions"><button class="btn primary" onclick="scanCANopen(this)">扫描 1–127</button><button class="btn" onclick="inspectCANopen()">节点诊断</button><button class="btn" onclick="sendNMT()">发送 NMT</button></div>
+            <div id="nodes" class="node-list"></div>
+            <pre id="nodeDiagnostic" class="output">选择目标节点后可读取身份对象、错误寄存器和心跳状态</pre>
+          </div>
+          <div class="card">
+            <h3>SDO 读写</h3>
+            <div class="form-grid">
+              <div class="field"><label>节点 ID</label><input id="sdoNode" type="number" min="1" max="127" value="1"></div>
+              <div class="field"><label>索引</label><input id="sdoIndex" value="0x1000"></div>
+              <div class="field"><label>子索引</label><input id="sdoSub" value="0"></div>
+              <div class="field"><label>写入编码</label><select id="sdoEncoding"><option value="hex">Hex</option><option value="integer">整数</option><option value="text">文本</option></select></div>
+              <div class="field full"><label>写入值</label><input id="sdoValue" placeholder="例如 01 00 00 00"></div>
+              <div class="field"><label>整数长度</label><select id="sdoSize"><option>1</option><option>2</option><option selected>4</option><option>8</option></select></div>
+              <label class="switch field"><input id="sdoSigned" type="checkbox">有符号整数</label>
+            </div>
+            <div class="actions"><button class="btn primary" onclick="sdoRead()">读取</button><button class="btn danger" onclick="sdoWrite()">写入</button></div>
+            <pre id="sdoOutput" class="output">--</pre>
+          </div>
+          <div class="card">
+            <h3>PDO 映射与发送</h3>
+            <div class="form-grid">
+              <div class="field"><label>节点 ID（需绑定 EDS）</label><input id="pdoNode" type="number" min="1" max="127" value="1"></div>
+              <div class="field"><label>RPDO 编号</label><input id="pdoNumber" type="number" value="1"></div>
+              <div class="field full"><label>发送变量 JSON</label><textarea id="pdoValues" spellcheck="false">{"Controlword": 6}</textarea></div>
+            </div>
+            <div class="actions"><button class="btn primary" onclick="pdoRead()">读取 PDO 映射</button><button class="btn danger" onclick="pdoTransmit()">发送 RPDO</button></div>
+            <pre id="pdoOutput" class="output">--</pre>
+          </div>
+        </div>
+      </section>
+
+      <section id="ethercat" class="page">
+        <div class="page-head"><div><h2>EtherCAT 主站</h2><p>SOEM 使用 eth0 原始二层接口</p></div></div>
+        <div class="grid">
+          <div class="card full">
+            <div class="notice">eth0 专用于 EtherCAT，不配置 IP；普通网络使用 eth1、Wi‑Fi 或 4G。</div>
+            <div class="actions"><button class="btn primary" onclick="scanEtherCAT(this)">扫描 EtherCAT 从站</button></div>
+            <pre id="ecatOutput" class="output">等待扫描</pre>
+          </div>
+          <div class="card">
+            <h3>CoE SDO 读写</h3>
+            <div class="form-grid">
+              <div class="field"><label>从站位置</label><input id="ecatSlave" type="number" min="1" max="200" value="1"></div>
+              <div class="field"><label>索引</label><input id="ecatIndex" value="0x1000"></div>
+              <div class="field"><label>子索引</label><input id="ecatSub" value="0"></div>
+              <div class="field"><label>最大读取字节</label><input id="ecatMax" type="number" min="1" max="4096" value="256"></div>
+              <div class="field full"><label>写入 Hex</label><input id="ecatValue" placeholder="例如 06 00"></div>
+            </div>
+            <div class="actions"><button class="btn primary" onclick="ethercatSDORead()">读取</button><button class="btn danger" onclick="ethercatSDOWrite()">写入</button></div>
+            <pre id="ecatSdoOutput" class="output">--</pre>
+          </div>
+          <div class="card">
+            <h3>过程数据周期测试</h3>
+            <div class="form-grid">
+              <div class="field"><label>周期数</label><input id="ecatCycles" type="number" min="1" max="10000" value="1000"></div>
+              <div class="field"><label>周期（μs）</label><input id="ecatPeriod" type="number" min="100" max="1000000" value="1000"></div>
+            </div>
+            <div class="notice">测试会临时进入 OP，交换限定次数的过程数据并统计 WKC；最长 10 秒。</div>
+            <div class="actions"><button class="btn primary" onclick="testEtherCATCycle(this)">开始测试</button></div>
+            <pre id="ecatCycleOutput" class="output">--</pre>
+          </div>
+        </div>
+      </section>
+
+      <section id="cellular" class="page">
+        <div class="page-head"><div><h2>双 EC20</h2><p>QMI 配置、拨号与链路状态</p></div><button class="btn" onclick="loadEC20()">检测模组</button></div>
+        <div class="grid">
+          <div class="card" id="ec20aCard"><h3>EC20 A</h3><div class="ec20-form" data-name="ec20a"></div></div>
+          <div class="card" id="ec20bCard"><h3>EC20 B</h3><div class="ec20-form" data-name="ec20b"></div></div>
+          <div class="card full"><h3>USB 与 WWAN 状态</h3><pre id="ec20Status" class="output">尚未检测</pre></div>
+        </div>
+      </section>
+
+      <section id="services" class="page">
+        <div class="page-head"><div><h2>服务与日志</h2><p>启停服务、查看日志和修改管理密码</p></div></div>
+        <div class="grid">
+          <div class="card"><h3>服务控制</h3><div class="actions"><button class="btn" onclick="service('thingsboard','start')">启动 ThingsBoard</button><button class="btn" onclick="service('thingsboard','stop')">停止</button><button class="btn" onclick="service('bluetooth','start')">启动蓝牙音响</button><button class="btn" onclick="service('ntp','restart')">重启 NTP</button></div><pre id="serviceOutput" class="output">--</pre></div>
+          <div class="card"><h3>修改管理密码</h3><div class="field"><label>新密码（至少 8 位）</label><input id="newPassword" type="password"></div><div class="actions"><button class="btn primary" onclick="changePassword()">修改密码</button></div></div>
+          <div class="card full"><div class="card-title"><h3>系统日志</h3><div><select id="logName" class="input"><option value="web">管理页面</option><option value="thingsboard">ThingsBoard</option><option value="messages">系统消息</option></select></div></div><div class="actions"><button class="btn" onclick="loadLog()">刷新日志</button></div><pre id="logOutput" class="output">--</pre></div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <div id="toast" class="toast"></div>
+
+  <script>
+    let csrf="";
+    const $=id=>document.getElementById(id);
+    function toast(message,error=false){const el=$("toast");el.textContent=message;el.className="toast show"+(error?" error":"");setTimeout(()=>el.className="toast",3500)}
+    async function api(path,options={}){options.headers=options.headers||{};if(options.body&&!((options.body) instanceof FormData)){options.headers["Content-Type"]="application/json";options.body=JSON.stringify(options.body)}if(csrf&&options.method&&options.method!=="GET")options.headers["X-CSRF-Token"]=csrf;const response=await fetch(path,options);let data={};try{data=await response.json()}catch(e){}if(response.status===401){$("login").classList.remove("hidden");throw new Error(data.error||"请登录")}if(!response.ok)throw new Error(data.error||`HTTP ${response.status}`);return data}
+    async function task(button,fn){const old=button&&button.innerHTML;if(button){button.disabled=true;button.innerHTML='<span class="spinner"></span> 执行中'}try{return await fn()}catch(e){toast(e.message,true);throw e}finally{if(button){button.disabled=false;button.innerHTML=old}}}
+    document.querySelectorAll("nav button").forEach(button=>button.onclick=()=>{document.querySelectorAll("nav button,.page").forEach(x=>x.classList.remove("active"));button.classList.add("active");$(button.dataset.page).classList.add("active");if(button.dataset.page==="cloud")loadCloud();if(button.dataset.page==="can"){loadCAN();loadEDS()}if(button.dataset.page==="cellular")loadEC20()});
+    $("loginForm").onsubmit=async event=>{event.preventDefault();try{const data=await api("/api/login",{method:"POST",body:{username:$("loginUser").value,password:$("loginPass").value}});csrf=data.csrf;$("login").classList.add("hidden");await loadStatus();toast("登录成功")}catch(e){toast(e.message,true)}};
+    async function logout(){try{await api("/api/logout",{method:"POST"})}catch(e){}csrf="";$("login").classList.remove("hidden")}
+    async function loadStatus(){try{const d=await api("/api/status");$("mHost").textContent=d.hostname;$("mTime").textContent=d.time;$("clock").textContent=d.time;$("mTB").textContent=d.services.thingsboard.running?"运行中":"已停止";$("mWeb").textContent=d.services.web.running?"运行中":"异常";$("addresses").textContent=d.addresses;$("passwordNotice").classList.toggle("hidden",!d.auth.must_change)}catch(e){}}
+    async function loadCloud(){try{const [tb,rs]=await Promise.all([api("/api/config/thingsboard"),api("/api/config/rs485")]);$("tbHost").value=tb.host;$("tbPort").value=tb.port;$("tbEnabled").checked=tb.enabled;$("tbBadge").textContent=tb.token_configured?"Token 已配置":"Token 未配置";$("rsPort").value=rs.port||"/dev/ttyAS5";$("rsBaud").value=rs.baudrate||9600;$("rsUnit").value=rs.unitId||1;$("rsParity").value=rs.parity||"N";$("rsBits").value=rs.bytesize||8;$("rsStop").value=rs.stopbits||1;$("rsPoll").value=rs.pollPeriod||1000}catch(e){toast(e.message,true)}}
+    async function saveTB(restart){try{await api("/api/config/thingsboard",{method:"PUT",body:{host:$("tbHost").value,port:+$("tbPort").value,token:$("tbToken").value,enabled:$("tbEnabled").checked,restart}});$("tbToken").value="";toast("ThingsBoard 配置已保存");loadCloud()}catch(e){toast(e.message,true)}}
+    async function saveRS485(){try{await api("/api/config/rs485",{method:"PUT",body:{port:$("rsPort").value,baudrate:+$("rsBaud").value,unitId:+$("rsUnit").value,parity:$("rsParity").value,bytesize:+$("rsBits").value,stopbits:+$("rsStop").value,pollPeriod:+$("rsPoll").value}});toast("RS485 配置已保存")}catch(e){toast(e.message,true)}}
+    async function loadCAN(){try{const d=await api("/api/config/can");const iface=$("canIf").value,c=d.config[iface]||{};$("canBitrate").value=c.bitrate||500000;$("canDataBitrate").value=c.data_bitrate||2000000;$("canRestart").value=c.restart_ms||100;$("canFD").checked=!!c.fd;$("canState").textContent=d.state.can0+"\n"+d.state.can1}catch(e){toast(e.message,true)}}
+    $("canIf").onchange=loadCAN;
+    async function applyCAN(){try{const d=await api("/api/config/can/"+$("canIf").value,{method:"PUT",body:{bitrate:+$("canBitrate").value,data_bitrate:+$("canDataBitrate").value,restart_ms:+$("canRestart").value,fd:$("canFD").checked}});$("canState").textContent=d.detail;toast("CAN 接口已应用")}catch(e){toast(e.message,true)}}
+    async function loadEDS(){try{const d=await api("/api/canopen/eds");$("edsList").textContent="文件：\n"+(d.files.join("\n")||"无")+"\n\n节点绑定：\n"+JSON.stringify(d.nodes,null,2)}catch(e){toast(e.message,true)}}
+    async function uploadEDS(){const file=$("edsFile").files[0];if(!file)return toast("请选择文件",true);const form=new FormData();form.append("file",file);if($("edsNode").value)form.append("node_id",$("edsNode").value);try{await api("/api/canopen/eds",{method:"POST",body:form});toast("EDS 已上传并通过解析");loadEDS()}catch(e){toast(e.message,true)}}
+    function coBase(){return{interface:$("coIf").value,bitrate:+$("coBitrate").value}}
+    async function scanCANopen(button){await task(button,async()=>{const d=await api("/api/canopen/scan",{method:"POST",body:{...coBase(),wait:1.2}});$("nodes").innerHTML=d.nodes.length?d.nodes.map(n=>`<button class="node" onclick="$('coNode').value=${n};inspectCANopen()">Node ${n}</button>`).join(""):'<span class="notice">未发现节点；检查接线、终端电阻和波特率。</span>';toast(`扫描完成：${d.nodes.length} 个节点`)})}
+    async function inspectCANopen(){const node=+$("coNode").value;if(!node)return toast("节点诊断需要选择 1–127",true);try{const d=await api("/api/canopen/node",{method:"POST",body:{...coBase(),node_id:node,heartbeat_wait:0.5}});$("nodeDiagnostic").textContent=JSON.stringify(d,null,2)}catch(e){toast(e.message,true)}}
+    async function sendNMT(){try{await api("/api/canopen/nmt",{method:"POST",body:{...coBase(),node_id:+$("coNode").value,state:$("nmtState").value}});toast("NMT 已发送")}catch(e){toast(e.message,true)}}
+    function sdoBase(){return{...coBase(),node_id:+$("sdoNode").value,index:$("sdoIndex").value,subindex:$("sdoSub").value}}
+    async function sdoRead(){try{const d=await api("/api/canopen/sdo/read",{method:"POST",body:sdoBase()});$("sdoOutput").textContent=JSON.stringify(d,null,2)}catch(e){toast(e.message,true)}}
+    async function sdoWrite(){if(!confirm("确认向 CANopen 设备写入 SDO？"))return;try{const d=await api("/api/canopen/sdo/write",{method:"POST",body:{...sdoBase(),encoding:$("sdoEncoding").value,value:$("sdoValue").value,size:+$("sdoSize").value,signed:$("sdoSigned").checked}});$("sdoOutput").textContent=JSON.stringify(d,null,2);toast("SDO 写入完成")}catch(e){toast(e.message,true)}}
+    async function pdoRead(){try{const d=await api("/api/canopen/pdo/read",{method:"POST",body:{...coBase(),node_id:+$("pdoNode").value}});$("pdoOutput").textContent=JSON.stringify(d,null,2)}catch(e){toast(e.message,true)}}
+    async function pdoTransmit(){if(!confirm("确认发送 RPDO？"))return;try{const values=JSON.parse($("pdoValues").value);const d=await api("/api/canopen/pdo/transmit",{method:"POST",body:{...coBase(),node_id:+$("pdoNode").value,pdo:+$("pdoNumber").value,values}});$("pdoOutput").textContent=JSON.stringify(d,null,2);toast("RPDO 已发送")}catch(e){toast(e.message,true)}}
+    async function scanEtherCAT(button){await task(button,async()=>{const d=await api("/api/ethercat/scan",{method:"POST",body:{interface:"eth0"}});$("ecatOutput").textContent=JSON.stringify(d,null,2);if(!d.ok)toast(d.output||"未发现 EtherCAT 从站",true)})}
+    function ecatSdoBase(){return{interface:"eth0",slave:+$("ecatSlave").value,index:$("ecatIndex").value,subindex:$("ecatSub").value}}
+    async function ethercatSDORead(){try{const d=await api("/api/ethercat/sdo/read",{method:"POST",body:{...ecatSdoBase(),max_bytes:+$("ecatMax").value}});$("ecatSdoOutput").textContent=JSON.stringify(d,null,2)}catch(e){toast(e.message,true)}}
+    async function ethercatSDOWrite(){if(!confirm("确认向 EtherCAT 从站写入 CoE SDO？错误参数可能改变驱动器行为。"))return;try{const d=await api("/api/ethercat/sdo/write",{method:"POST",body:{...ecatSdoBase(),value:$("ecatValue").value}});$("ecatSdoOutput").textContent=JSON.stringify(d,null,2);toast("EtherCAT SDO 写入完成")}catch(e){toast(e.message,true)}}
+    async function testEtherCATCycle(button){await task(button,async()=>{const d=await api("/api/ethercat/cycle",{method:"POST",body:{interface:"eth0",count:+$("ecatCycles").value,period_us:+$("ecatPeriod").value}});$("ecatCycleOutput").textContent=JSON.stringify(d,null,2);toast(d.ok?"周期测试通过":"周期测试发现 WKC 异常",!d.ok)})}
+    function ec20HTML(name){return`<div class="form-grid"><div class="field"><label>QMI 设备</label><input data-k="device"></div><div class="field"><label>网络接口</label><input data-k="interface"></div><div class="field full"><label>APN</label><input data-k="apn"></div><div class="field"><label>用户名</label><input data-k="username"></div><div class="field"><label>密码</label><input data-k="password" type="password" placeholder="留空保持"></div><div class="field"><label>认证</label><select data-k="auth"><option>none</option><option>pap</option><option>chap</option><option>both</option></select></div></div><div class="actions"><button class="btn primary" onclick="saveEC20('${name}')">保存</button><button class="btn" onclick="dialEC20('${name}','connect')">拨号</button><button class="btn danger" onclick="dialEC20('${name}','disconnect')">断开</button></div>`}
+    document.querySelectorAll(".ec20-form").forEach(x=>x.innerHTML=ec20HTML(x.dataset.name));
+    function ec20Container(name){return document.querySelector(`.ec20-form[data-name="${name}"]`)}
+    async function loadEC20(){try{const [s,p]=await Promise.all([api("/api/ec20/status"),api("/api/ec20/profiles")]);$("ec20Status").textContent="设备：\n"+s.devices.join("\n")+"\n\n接口：\n"+s.links+"\n\nUSB：\n"+s.usb;Object.entries(p.profiles).forEach(([name,cfg])=>{const box=ec20Container(name);if(!box)return;Object.entries(cfg).forEach(([k,v])=>{const el=box.querySelector(`[data-k="${k}"]`);if(el&&k!=="password")el.value=v??""})})}catch(e){toast(e.message,true)}}
+    async function saveEC20(name){const box=ec20Container(name),body={};box.querySelectorAll("[data-k]").forEach(el=>body[el.dataset.k]=el.value);try{await api("/api/ec20/profiles/"+name,{method:"PUT",body});toast(`${name} 配置已保存`)}catch(e){toast(e.message,true)}}
+    async function dialEC20(name,action){try{const d=await api(`/api/ec20/${name}/${action}`,{method:"POST"});$("ec20Status").textContent=JSON.stringify(d,null,2);toast(`${name} ${action==="connect"?"拨号":"断开"}完成`)}catch(e){toast(e.message,true)}}
+    async function service(name,action){try{const d=await api(`/api/services/${name}/${action}`,{method:"POST"});$("serviceOutput").textContent=d.output;toast("服务操作完成")}catch(e){toast(e.message,true)}}
+    async function changePassword(){try{await api("/api/password",{method:"POST",body:{password:$("newPassword").value}});$("newPassword").value="";toast("管理密码已修改");loadStatus()}catch(e){toast(e.message,true)}}
+    async function loadLog(){try{const d=await api(`/api/logs/${$("logName").value}?lines=300`);$("logOutput").textContent=d.output||"日志为空"}catch(e){toast(e.message,true)}}
+    loadStatus();
+  </script>
+</body>
+</html>

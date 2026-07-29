@@ -1,0 +1,53 @@
+{
+  "thingsboard": {
+    "host": "thingsboard.cloud",
+    "port": 1883,
+    "remoteShell": false,
+    "remoteConfiguration": false,
+    "latencyDebugMode": false,
+    "statistics": {
+      "enable": true,
+      "statsSendPeriodInSeconds": 60,
+      "customStatsSendPeriodInSeconds": 3600
+    },
+    "maxPayloadSizeBytes": 8196,
+    "minPackSendDelayMS": 50,
+    "minPackSizeToSend": 500,
+    "checkConnectorsConfigurationInSeconds": 60,
+    "handleDeviceRenaming": true,
+    "security": {
+      "type": "accessToken",
+      "accessToken": "PUT_GATEWAY_ACCESS_TOKEN_HERE"
+    },
+    "qos": 1
+  },
+  "storage": {
+    "type": "file",
+    "read_records_count": 100,
+    "max_records_count": 10000,
+    "data_folder_path": "/var/lib/thingsboard-gateway/data/",
+    "max_file_count": 10,
+    "max_read_records_count": 100,
+    "max_records_per_file": 1000
+  },
+  "grpc": {
+    "enabled": false
+  },
+  "connectors": [
+    {
+      "name": "OmniGate RS485 RTU",
+      "type": "modbus",
+      "configuration": "modbus.json"
+    },
+    {
+      "name": "OmniGate CAN-FD 0",
+      "type": "can",
+      "configuration": "can0.json"
+    },
+    {
+      "name": "OmniGate CAN-FD 1",
+      "type": "can",
+      "configuration": "can1.json"
+    }
+  ]
+}

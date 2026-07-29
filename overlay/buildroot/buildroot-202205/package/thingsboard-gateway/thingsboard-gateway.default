@@ -1,0 +1,2 @@
+# Set to 1 after configuring the ThingsBoard host and gateway access token.
+ENABLED=0

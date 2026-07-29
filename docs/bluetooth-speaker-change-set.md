@@ -54,19 +54,29 @@ codec 能注册和协商，播放时仍会断流，不属于可交付功能。
 cd /path/to/t153mx-ominigate-v1
 ./scripts/verify_bluetooth_speaker.sh
 ./scripts/apply_overlay.sh /path/to/T153_Tina_V1.0
+./scripts/verify_bluetooth_speaker.sh /path/to/T153_Tina_V1.0
 
 cd /path/to/T153_Tina_V1.0
-source build/envsetup.sh
-lunch t153_omnigate_mmc-buildroot
-make
-pack
+./build.sh config
+# 选择 linux / buildroot / t153 / omnigate / default /
+# linux-5.10-origin
+./build.sh
+./build.sh pack
 ```
 
-若要核对 overlay 是否已完整复制到目标 SDK：
+不要把交付仓库根目录直接复制到 SDK 根目录。`overlay/device/...` 必须由
+`apply_overlay.sh` 去掉第一层 `overlay/` 后落到 SDK 的 `device/...`；
+否则配置阶段会报 `Can't find kernel defconfig!`。
+
+若 Buildroot 输出目录以前编过 aptX 测试版，可以强制清理 BlueALSA 缓存后
+重新生成根文件系统和镜像：
 
 ```sh
-cd /path/to/t153mx-ominigate-v1
-./scripts/verify_bluetooth_speaker.sh /path/to/T153_Tina_V1.0
+make -C buildroot/buildroot-202205 \
+    O="$PWD/out/t153/omnigate/buildroot/buildroot" \
+    bluez-alsa-dirclean
+./build.sh rootfs
+./build.sh pack
 ```
 
 ## 设备使用

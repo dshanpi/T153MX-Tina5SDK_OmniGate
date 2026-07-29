@@ -1,0 +1,12 @@
+#!/bin/sh
+set -eu
+
+export TB_GW_CONFIG_DIR="${TB_GW_CONFIG_DIR:-/etc/thingsboard-gateway/config}"
+export TB_GW_LOGS_PATH="${TB_GW_LOGS_PATH:-/var/log/thingsboard-gateway}"
+export TB_GW_ALLOW_RUNTIME_PIP=false
+
+mkdir -p /var/lib/thingsboard-gateway/data /var/log/thingsboard-gateway
+cd /var/lib/thingsboard-gateway
+
+exec /usr/bin/python3 -c \
+	'from thingsboard_gateway.tb_gateway import daemon; daemon()'

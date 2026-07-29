@@ -1,0 +1,19 @@
+#!/bin/sh
+set -eu
+
+channel="${1:-}"
+bitrate="${2:-500000}"
+data_bitrate="${3:-2000000}"
+
+case "$channel" in
+	can0|can1) ;;
+	*)
+		echo "Usage: $0 {can0|can1} [nominal-bitrate] [data-bitrate]" >&2
+		exit 2
+		;;
+esac
+
+ip link set "$channel" down 2>/dev/null || true
+ip link set "$channel" type can bitrate "$bitrate" dbitrate "$data_bitrate" fd on
+ip link set "$channel" up
+ip -details link show "$channel"

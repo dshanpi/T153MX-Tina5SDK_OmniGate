@@ -1,0 +1,50 @@
+#!/bin/sh
+
+DAEMON=/usr/bin/thingsboard-gateway
+PIDFILE=/run/thingsboard-gateway.pid
+DEFAULTS=/etc/default/thingsboard-gateway
+
+ENABLED=0
+[ -r "$DEFAULTS" ] && . "$DEFAULTS"
+
+start_gateway()
+{
+	if [ "$ENABLED" != "1" ]; then
+		echo "ThingsBoard Gateway is installed but disabled; set ENABLED=1 in $DEFAULTS"
+		return 0
+	fi
+
+	echo "Starting ThingsBoard Gateway"
+	start-stop-daemon -S -b -m -p "$PIDFILE" -x "$DAEMON"
+}
+
+stop_gateway()
+{
+	echo "Stopping ThingsBoard Gateway"
+	start-stop-daemon -K -p "$PIDFILE" -o
+}
+
+case "$1" in
+	start)
+		start_gateway
+		;;
+	stop)
+		stop_gateway
+		;;
+	restart)
+		stop_gateway
+		start_gateway
+		;;
+	status)
+		if [ -s "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
+			echo "ThingsBoard Gateway is running (PID $(cat "$PIDFILE"))"
+		else
+			echo "ThingsBoard Gateway is stopped"
+			exit 1
+		fi
+		;;
+	*)
+		echo "Usage: $0 {start|stop|restart|status}"
+		exit 1
+		;;
+esac

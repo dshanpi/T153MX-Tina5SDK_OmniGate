@@ -1,0 +1,28 @@
+#!/bin/sh
+
+start_interfaces()
+{
+	# CAN-FD bitrates are deployment-specific. Keep both controllers down
+	# until configured, but make stale settings deterministic.
+	ip link set can0 down 2>/dev/null || true
+	ip link set can1 down 2>/dev/null || true
+
+	# eth0 is reserved for SOEM EtherCAT. It needs raw Ethernet link only,
+	# not an IP address or DHCP client.
+	ip addr flush dev eth0 2>/dev/null || true
+	ip link set eth0 up 2>/dev/null || true
+}
+
+case "$1" in
+	start|restart)
+		start_interfaces
+		;;
+	stop)
+		ip link set can0 down 2>/dev/null || true
+		ip link set can1 down 2>/dev/null || true
+		;;
+	*)
+		echo "Usage: $0 {start|stop|restart}"
+		exit 1
+		;;
+esac

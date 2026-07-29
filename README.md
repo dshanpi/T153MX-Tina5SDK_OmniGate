@@ -7,7 +7,7 @@
 
 OmniGate 是基于全志 T153 SoC（4× Cortex-A7）的工业网关 / 异构控制板：
 
-- **网络**：双 4G LTE + 双 RJ45 千兆以太网（RGMII）
+- **网络**：双 4G LTE + 双 RJ45 千兆以太网（RGMII）；默认 `eth0` 专用于 EtherCAT，`eth1` 用于普通 IP 网络
 - **总线**：2× CAN-FD + 2× RS485
 - **无线**：Wi-Fi + Bluetooth（AIC8800D80，SDIO + UART）
 - **音频**：PCM
@@ -72,9 +72,19 @@ t153mx-ominigate-v1/
 ```sh
 # 假设 Tina SDK 在 /path/to/TinaSDK
 /path/to/t153mx-ominigate-v1/scripts/apply_overlay.sh /path/to/TinaSDK
+
+# 核对蓝牙音响相关文件是否完整落到 SDK 的真实路径
+/path/to/t153mx-ominigate-v1/scripts/verify_bluetooth_speaker.sh /path/to/TinaSDK
+
+# 核对 ThingsBoard / SOEM / RS485-CAN / EC20 集成及最终配置
+/path/to/t153mx-ominigate-v1/scripts/verify_industrial_gateway.sh /path/to/TinaSDK
 ```
 
 脚本会把 `overlay/` 下所有文件按相对路径 tar 拷贝到目标 SDK，**不执行任何删除动作**。
+
+> 不要执行 `cp -a t153mx-ominigate-v1/* /path/to/TinaSDK/`。这样会得到
+> `/path/to/TinaSDK/overlay/device/...`，而构建系统实际读取的是
+> `/path/to/TinaSDK/device/...`，最终会报 `Can't find kernel defconfig!`。
 
 ### 2. （可选）清理已被替换的旧固件
 
@@ -90,21 +100,50 @@ cat /path/to/t153mx-ominigate-v1/meta/delete_list.txt
 
 ### 3. 编译 / 烧录 / 串口调试
 
-应用 overlay 后，按 T153 标准 Tina 流程：
+应用 overlay 后，在 SDK 根目录执行本版本已经实板验证的构建流程：
 
 ```sh
-# 在 SDK 根目录
-source build/envsetup.sh
-lunch t153_omnigate_mmc-buildroot
-make && pack
+./build.sh config
+# 依次选择：linux / buildroot / t153 / omnigate / default /
+# linux-5.10-origin
+
+./build.sh
+./build.sh pack
 ```
+
+生成的默认镜像为 `out/t153_linux_omnigate_uart0.img`。
 
 烧录建议使用本仓库自带的 OpenixCLI：
 
 ```sh
-sudo tools/OpenixCLI/openixcli scan -l
-sudo tools/OpenixCLI/openixcli flash <image.img>
+tools/OpenixCLI/openixcli scan -l
+tools/OpenixCLI/openixcli inspect out/t153_linux_omnigate_uart0.img
+tools/OpenixCLI/openixcli flash --verify true --mode full_erase \
+    --post-action reboot out/t153_linux_omnigate_uart0.img
 ```
+
+`full_erase` 会清除旧数据和蓝牙配对记录；烧录完成后需要在手机上删除旧记录并
+重新配对。
+
+### 4. 工业协议与 ThingsBoard
+
+本 overlay 已集成：
+
+- `http://板子IP/` 本地 Web 管理页面（初始账号 `admin / omnigate`）
+- ThingsBoard Gateway 3.8.3（默认不开机启动，填写服务端和 Token 后再启用）
+- NTP 自动校时（避免无 RTC 冷启动后 MQTT/HTTPS 证书校验失败）
+- SOEM 2.0.0 EtherCAT 主站、结构化扫描、CoE SDO 与周期/WKC 测试
+- 1 路 Modbus RTU，默认设备 `/dev/ttyAS5`
+- Python CANopen 主站，支持 EDS、节点身份/心跳诊断、NMT、SDO 和 PDO
+- `can0` / `can1` 两路经典 CAN / CAN-FD
+- 双 EC20 所需的 USB 串口、QMI/WWAN、MBIM 和 PPP 内核/用户态支持
+- 原有蓝牙音响及 aptX 支持保持不变
+
+接口配置、启动命令及验收方法见
+[工业网关集成说明](./docs/industrial-gateway-integration.md)，本轮新增内容和实物
+验收清单见 [2026-07-29 续作记录](./docs/industrial-gateway-development-2026-07-29.md)。
+分支所含代码、配置、构建结果及待验项目汇总在
+[Gateway CANopen / EtherCAT 交付清单](./docs/gateway-canopen-ethercat-change-set.md)。
 
 串口调试建议使用自带的 serial_agent（独占式串口代理，避免多人/多终端抢占 `/dev/ttyACM0`）：
 
@@ -153,3 +192,5 @@ nc 127.0.0.1 23334
 
 - 上游 Tina SDK：全志官方 Tina Linux V5.0
 - OpenixCLI：<https://github.com/YuzukiTsuru/OpenixCLI>
+- ThingsBoard Gateway：<https://github.com/thingsboard/thingsboard-gateway>
+- SOEM EtherCAT 主站：<https://github.com/OpenEtherCATsociety/SOEM>

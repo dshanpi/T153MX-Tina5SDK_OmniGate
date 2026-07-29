@@ -1,0 +1,10 @@
+sha256  9fed88e24e447ded77cc60a6cdbde7c3377f71dc1118ae3e73245efcffa02630  thingsboard-gateway-3.8.3.tar.gz
+sha256  b40930bbcf80744c86c46a12bc9da056641d722716c378f5659b9e555ef833e1  LICENSE
+sha256  994793af429502c4ea2ebf6bf664629d07c1a9fe974af92966e4b8d2df7edc61  packaging-23.1-py3-none-any.whl
+sha256  1cee9ad369867bfdbbb48b7dd50374c0967a0bb7710050facf0dd6911440e3df  urllib3-2.3.0-py3-none-any.whl
+sha256  70761cfe03c773ceb22aa2f671b4757976145175cdfca038c02654d061d6dcc6  requests-2.32.3-py3-none-any.whl
+sha256  292dcf859d6f232c30abc9753c1f0b7804771fd9c749641b32831de01b360b30  pymodbus-3.9.2-py3-none-any.whl
+sha256  c47e9e735518501a3c9b719dbd795aa5d5a1dba48d9c85bae1777ab9ae6c7c45  pymmh3-0.0.5-py2.py3-none-any.whl
+sha256  69a7a52634fed8b8bf6e24a050fb60bff1c9bd8f6d24572b99c32d4e71e62a51  cachetools-6.2.4-py3-none-any.whl
+sha256  cadddad73328f806532dff0dd1dba983bc81264d192e69e710d7770d8887f182  tb_paho_mqtt_client-2.1.2-py3-none-any.whl
+sha256  e20603f2e744d73c0a1de492340f8ac57e481ec71b8b53fd0a7c3b981f04153d  tb_mqtt_client-1.13.13-py3-none-any.whl

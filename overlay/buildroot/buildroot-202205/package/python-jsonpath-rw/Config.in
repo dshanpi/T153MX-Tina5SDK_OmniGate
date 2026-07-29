@@ -1,0 +1,10 @@
+config BR2_PACKAGE_PYTHON_JSONPATH_RW
+	bool "python-jsonpath-rw"
+	select BR2_PACKAGE_PYTHON_DECORATOR # runtime
+	select BR2_PACKAGE_PYTHON_PLY # runtime
+	select BR2_PACKAGE_PYTHON_SIX # runtime
+	help
+	  A robust and significantly extended implementation of JSONPath
+	  for Python.
+
+	  https://github.com/kennknowles/python-jsonpath-rw

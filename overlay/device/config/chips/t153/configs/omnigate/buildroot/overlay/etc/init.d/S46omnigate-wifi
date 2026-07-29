@@ -1,0 +1,61 @@
+#!/bin/sh
+
+CONF=/etc/wpa_supplicant.conf
+WPA_PID=/var/run/wpa_supplicant.wlan0.pid
+DHCP_PID=/var/run/udhcpc.wlan0.pid
+
+has_network()
+{
+	[ -r "$CONF" ] && grep -q '^[[:space:]]*network=' "$CONF"
+}
+
+start()
+{
+	if ! has_network; then
+		echo "omnigate-wifi: no configured network, skipping"
+		return 0
+	fi
+
+	echo "Starting omnigate WiFi..."
+	ip link set wlan0 up || return 1
+	if ! wpa_cli -i wlan0 ping 2>/dev/null | grep -q '^PONG$'; then
+		rm -f "$WPA_PID" /var/run/wpa_supplicant/wlan0
+		wpa_supplicant -B -P "$WPA_PID" -i wlan0 -c "$CONF" || return 1
+	fi
+
+	count=0
+	while [ "$count" -lt 15 ]; do
+		[ "$(wpa_cli -i wlan0 status 2>/dev/null | sed -n 's/^wpa_state=//p')" = "COMPLETED" ] && break
+		count=$((count + 1))
+		sleep 1
+	done
+	udhcpc -b -R -p "$DHCP_PID" -i wlan0 -x "hostname:$(hostname)"
+}
+
+stop()
+{
+	echo "Stopping omnigate WiFi..."
+	[ -s "$DHCP_PID" ] && kill "$(cat "$DHCP_PID")" 2>/dev/null
+	wpa_cli -i wlan0 terminate >/dev/null 2>&1
+	[ -s "$WPA_PID" ] && kill "$(cat "$WPA_PID")" 2>/dev/null
+	rm -f "$DHCP_PID" "$WPA_PID" /var/run/wpa_supplicant/wlan0
+	ip addr flush dev wlan0 2>/dev/null
+	ip link set wlan0 down 2>/dev/null
+}
+
+case "$1" in
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	restart)
+		stop
+		start
+		;;
+	*)
+		echo "Usage: $0 {start|stop|restart}"
+		exit 1
+		;;
+esac

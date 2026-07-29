@@ -1,0 +1,8 @@
+#!/bin/sh
+set -eu
+
+SOEM_INTERFACE=eth0
+[ -r /etc/ethercat/soem.conf ] && . /etc/ethercat/soem.conf
+
+interface="${1:-$SOEM_INTERFACE}"
+exec /usr/bin/slaveinfo "$interface"

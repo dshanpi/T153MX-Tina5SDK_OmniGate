@@ -1,0 +1,24 @@
+#!/bin/sh
+set -eu
+
+SOEM_INTERFACE=eth0
+SOEM_PRIORITY=80
+SOEM_CPU=2
+[ -r /etc/ethercat/soem.conf ] && . /etc/ethercat/soem.conf
+
+program="${1:-simple_ng}"
+shift || true
+
+case "$program" in
+	/*) ;;
+	*) program="/usr/bin/$program" ;;
+esac
+
+[ -x "$program" ] || {
+	echo "SOEM program not found: $program" >&2
+	exit 127
+}
+
+ip link set dev "$SOEM_INTERFACE" up
+exec taskset -c "$SOEM_CPU" chrt -f "$SOEM_PRIORITY" \
+	"$program" "$SOEM_INTERFACE" "$@"
