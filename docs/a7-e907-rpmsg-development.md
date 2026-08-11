@@ -23,6 +23,8 @@ remoteproc(e907_rproc)
 2. 写入 `start` 后状态变成 `running`。
 3. `/dev/rpmsg_ctrl-*` 出现，创建端点后 `/dev/rpmsgN` 出现。
 4. `amp_shell` 成功建立 `console` 端点并与 E907 收发数据。
+5. `omnigate-amp exec "echo-3-parameters AMP SHELL OK"` 依次返回三个参数，
+   且退出后不存在残留的 `/dev/rpmsgN` 端点。
 
 remoteproc 编号和 RPMsg 控制节点名称由内核动态分配，不能依赖固定的
 `remoteproc1` 或 `rpmsg_ctrl-c906_rproc@0`。
@@ -40,6 +42,14 @@ remoteproc 编号和 RPMsg 控制节点名称由内核动态分配，不能依�
 
 旧内核探测不支持的 Auto Free ioctl 时仍可能产生一次内核告警，但不会再因该
 ioctl 失败而终止端点创建。
+
+### FreeRTOS CLI 多段输出
+
+`rtos/lichee/rtos-components/aw/multi_console/shell.c` 会按照
+`FreeRTOS_CLIProcessCommand()` 的接口约定，在返回 `pdTRUE` 时继续调用并逐段
+回传输出，直到返回 `pdFALSE`。这使 `echo-3-parameters`、
+`echo-parameters` 等需要多次填充输出缓冲区的命令可以通过 AMP shell 完整返回，
+而不会再被误报为 `Undown Know Error`。
 
 ### rootfs 和板端工具
 
@@ -103,13 +113,13 @@ make -C buildroot/buildroot-202205 \
 - `amp_shell` 使用 ARM hard-float 交叉工具链编译并进入 rootfs。
 - `/usr/bin/amp_shell` 和 `/usr/bin/omnigate-amp` 均存在于 `rootfs.tar`。
 - `amp_rv0.bin` 与打包后的 `amp_rv0.fex` SHA-256 一致：
-  `68f165b568a02fb726560dde3e657a1a0bf00c04e7a50bd8382e8ed0f73f27ac`。
+  `5e581c542a991d2be5e37d7cdc95ca3498938d70b830a6c03d23d3e8ad6701bd`。
 - squashfs：`54648.01 KiB`。
 - 打包结果：`Dragon execute image.cfg SUCCESS`、`pack finish`。
 - 镜像：`out/t153_linux_omnigate_uart0.img`
 - 大小：`529295360` bytes。
 - SHA-256：
-  `76f64efa46c7f0dc0b5689f5c2b443dc86a2088785065ae77199ece253073058`
+  `4b640979d160499ddfd81e038af3c9ae3c78c9f56f719e2930a77b7c723ebb0f`
 
 该 SDK 同时保留了此前已应用的其他 OmniGate 功能，以上哈希用于核对本机生成的
 集成测试镜像，不代表从 `origin/main` 仅应用本分支后仍会得到相同哈希。固件体积

@@ -47,6 +47,7 @@ require_text()
 
 require_file device/config/chips/t153/bin/amp_rv0.bin
 require_file platform/allwinner/system/amp_shell/files/rawdev/rpmsg.c
+require_file rtos/lichee/rtos-components/aw/multi_console/shell.c
 require_exec device/config/chips/t153/configs/omnigate/buildroot/overlay/usr/bin/omnigate-amp
 require_config buildroot/buildroot-202205/configs/sun8iw22p1_t153_mmc_defconfig BR2_PACKAGE_AMP_SHELL
 
@@ -72,6 +73,17 @@ else
 	ok "amp_shell rpmsg.c overlay matches SDK"
 fi
 
+if ! cmp -s \
+	"$REPO_DIR/overlay/rtos/lichee/rtos-components/aw/multi_console/shell.c" \
+	"$SDK/rtos/lichee/rtos-components/aw/multi_console/shell.c"; then
+	fail "multi_console shell.c overlay differs from SDK"
+else
+	ok "multi_console shell.c overlay matches SDK"
+fi
+require_text \
+	rtos/lichee/rtos-components/aw/multi_console/shell.c \
+	"} while (ret);"
+
 BR_CONFIG=out/t153/omnigate/buildroot/buildroot/.config
 K_CONFIG=out/t153/kernel/build/.config
 TARGET=out/t153/omnigate/buildroot/buildroot/target
@@ -87,11 +99,29 @@ fi
 if [ -d "$SDK/$TARGET" ]; then
 	require_exec "$TARGET/usr/bin/amp_shell"
 	require_exec "$TARGET/usr/bin/omnigate-amp"
+	if cmp -s \
+		"$SDK/device/config/chips/t153/bin/amp_rv0.bin" \
+		"$SDK/$TARGET/lib/firmware/amp_rv0.bin"; then
+		ok "Buildroot target amp_rv0.bin matches RTOS output"
+	else
+		fail "Buildroot target amp_rv0.bin differs from RTOS output; run ./build.sh rootfs"
+	fi
 	if strings "$SDK/$TARGET/usr/bin/amp_shell" |
 		grep -Fq "fallback to RPMSG_CREATE_EPT_IOCTL"; then
 		ok "amp_shell contains runtime ioctl fallback"
 	else
 		fail "amp_shell runtime ioctl fallback"
+	fi
+fi
+
+PACKED_RTOS=out/t153/omnigate/pack_out/amp_rv0.fex
+if [ -f "$SDK/$PACKED_RTOS" ]; then
+	if cmp -s \
+		"$SDK/device/config/chips/t153/bin/amp_rv0.bin" \
+		"$SDK/$PACKED_RTOS"; then
+		ok "pack_out amp_rv0.fex matches RTOS output"
+	else
+		fail "pack_out amp_rv0.fex differs from RTOS output; run ./build.sh pack"
 	fi
 fi
 

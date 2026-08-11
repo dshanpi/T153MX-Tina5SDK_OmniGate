@@ -81,6 +81,8 @@ t153mx-ominigate-v1/
 
 `ampcpudev` 分支的异构核通信实现、构建结果和板端验收命令见
 [A7 Linux 与 E907 FreeRTOS 核间通信](./docs/a7-e907-rpmsg-development.md)。
+完整的架构说明、源码索引、使用教程、MCP 自动验证案例和故障反馈模板见
+[T153MX OmniGate AMP Shell 使用指南](./docs/amp-shell/README.md)。
 
 ### 2. （可选）清理已被替换的旧固件
 
@@ -130,7 +132,7 @@ nc 127.0.0.1 23334
 | --- | --- |
 | `system-sdk-ai-default` | T153 SDK 默认 AI 开发闭环：清理配置 → 编译打包 → 烧录 → 串口验证 |
 | `t153-flash-serial-debug` | 统一 T153 串口连接与固件烧录流程，含 FEL/USB 恢复步骤 |
-| `t153-c906-heterogeneous-dev` | T153 A7 Linux + C906 RTOS 异构开发联调（remoteproc / RPMsg / amp_shell） |
+| `t153-c906-heterogeneous-dev` | 历史名称；当前 OmniGate 实际为 A7 Linux + E907 FreeRTOS 联调（remoteproc / RPMsg / amp_shell） |
 | `t153-lvgl-ui-demo-dev` | 在 T153 上创建 / 交叉编译 / 烧写 / 验证 LVGL 界面示例 |
 | `serial-agent-daemon` | T153 串口独占代理（single-owner）使用规范，避免串口抢占冲突 |
 
