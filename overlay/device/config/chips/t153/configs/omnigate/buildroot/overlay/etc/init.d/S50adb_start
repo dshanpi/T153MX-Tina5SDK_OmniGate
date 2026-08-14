@@ -1,0 +1,116 @@
+#!/bin/sh
+#
+# Start the adbd....
+#
+
+# config adb serialnumber for adb devices
+adb_serialnumber=/etc/.adb_sn
+
+disable_udc="/etc/.disable_udc"
+udc_config=/sys/kernel/config/usb_gadget/g1/UDC
+
+otg_role_file="/sys/devices/platform/soc/usbc0/otg_role"
+usb_device_file="/sys/devices/platform/soc/usbc0/usb_device"
+hardware_type=`cat /proc/cmdline | tr ' ' '\n' | grep 'hardware' | awk -F "=" '{print $2}'`
+
+function enable_udc(){
+	while [ 1 ];do
+		udc=`ls /sys/class/udc 2>/dev/null`
+		isudc=`cat $udc_config 2>/dev/null`
+		if [ "x$isudc" = "x" ] && [ -f $udc_config ]; then
+			echo $udc > $udc_config
+		fi
+		sleep 1
+		if [ -f $disable_udc ];then
+			rm $disable_udc
+			break
+		fi
+	done
+}
+
+function start_adb(){
+	serialnumber=$1
+	if [ "x$serialnumber" = "x" ];then
+		serialnumber="0402101560"
+	fi
+	printf "Starting adb: "
+	# for adbd compatibilities
+	mkdir -p /system/
+	mkdir -p /system/bin
+	if [ ! -f /system/bin/sh ];then
+		ln -s /bin/sh /system/bin/sh
+	fi
+
+	# config ptmx
+	mkdir -p /dev/pts
+	mount -t devpts none /dev/pts
+
+	# config adb function
+	mount -t configfs none /sys/kernel/config > /dev/null 2>&1
+	mkdir -p /sys/kernel/config/usb_gadget/g1
+	echo "0x18d1" > /sys/kernel/config/usb_gadget/g1/idVendor
+	echo "0x4ee7" > /sys/kernel/config/usb_gadget/g1/idProduct
+	mkdir -p /sys/kernel/config/usb_gadget/g1/strings/0x409
+	echo "$serialnumber" > /sys/kernel/config/usb_gadget/g1/strings/0x409/serialnumber
+	echo "Tina Linux" > /sys/kernel/config/usb_gadget/g1/strings/0x409/manufacturer
+	echo "T153MX-OminiGate ADB" > /sys/kernel/config/usb_gadget/g1/strings/0x409/product
+	mkdir -p /sys/kernel/config/usb_gadget/g1/functions/ffs.adb
+	mkdir -p /sys/kernel/config/usb_gadget/g1/configs/c.1
+	mkdir -p /sys/kernel/config/usb_gadget/g1/configs/c.1/strings/0x409
+	echo 0xc0 > /sys/kernel/config/usb_gadget/g1/configs/c.1/bmAttributes
+	echo 500 > /sys/kernel/config/usb_gadget/g1/configs/c.1/MaxPower
+	ln -s /sys/kernel/config/usb_gadget/g1/functions/ffs.adb/ /sys/kernel/config/usb_gadget/g1/configs/c.1/ffs.adb > /dev/null 2>&1
+	mkdir -p /dev/usb-ffs
+	mkdir -p /dev/usb-ffs/adb
+	if [ "x`ls -A /dev/usb-ffs/adb`" = "x" ];then
+		mount -o uid=2000,gid=2000 -t functionfs adb /dev/usb-ffs/adb/
+	fi
+
+	# start adbd daemon
+	adbd &
+	[ $? -eq 0 ] && echo "OK" || "FAIL"
+
+	# enable_udc &
+}
+
+case "$1" in
+	start|"")
+		if [ "x$hardware_type" = "xsun8iw11p1" ];then
+			otg_role_file="/sys/devices/platform/soc@1c00000/soc@1c00000:usbc0@0/otg_role"
+		elif [ "x$hardware_type" = "xsun8iw20p1" ];then
+			otg_role_file="/sys/devices/platform/soc@3000000/soc@3000000:usbc0@0/otg_role"
+		fi
+		[ -f "$otg_role_file" ] && otg_role=`cat "$otg_role_file"`
+		echo "usb0 current mode: $otg_role"
+		if [ -f "$otg_role_file" ] && [ "x$otg_role" != "xusb_device" ];then
+			# force switch usb0 to device mode
+			echo "Starting switch usb0 to device mode."
+			if [ "x$hardware_type" = "xsun8iw11p1" ];then
+				usb_device_file="/sys/devices/platform/soc@1c00000/soc@1c00000:usbc0@0/usb_device"
+			elif [ "x$hardware_type" = "xsun8iw20p1" ];then
+				usb_device_file="/sys/devices/platform/soc@3000000/soc@3000000:usbc0@0/usb_device"
+			fi
+			[ -f "$usb_device_file" ] && cat $usb_device_file
+		fi
+		[ -f $adb_serialnumber ] && serialnumber=`cat $adb_serialnumber`
+		if [ "x$serialnumber" = "x" ];then
+			serialnumber=`cat /proc/cmdline | tr ' ' '\n' | grep 'snum' | awk -F "=" '{print $2}'`
+		fi
+		start_adb $serialnumber
+		;;
+	stop)
+		printf "Stopping adbd "
+		# touch $disable_udc
+		# sleep 2
+		killall adbd &
+		[ $? -eq 0 ] && echo "OK" || "FAIL"
+		;;
+	restart|reload)
+		"$0" stop
+		"$0" start
+		;;
+	*)
+		echo "Usage: $0 {start|stop|restart}"
+		exit 1
+		;;
+esac
