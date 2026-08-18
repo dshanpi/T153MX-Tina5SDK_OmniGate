@@ -1,0 +1,145 @@
+#!/bin/sh
+
+# Network startup and Ethernet carrier monitor for the T153 omnigate board.
+
+NETWORK_DIR="/run/network"
+MONITOR_PIDFILE="${NETWORK_DIR}/ethernet-link-monitor.pid"
+MANAGED_INTERFACES="eth0 eth1"
+
+mkdir -p "${NETWORK_DIR}"
+
+dhcp_pid_alive()
+{
+	link_iface="$1"
+	link_pidfile="/var/run/udhcpc.${link_iface}.pid"
+	[ -r "${link_pidfile}" ] || return 1
+	read link_pid < "${link_pidfile}"
+	case "${link_pid}" in
+		''|*[!0-9]*) return 1 ;;
+	esac
+	kill -0 "${link_pid}" 2>/dev/null
+}
+
+stop_dhcp()
+{
+	link_iface="$1"
+	link_pidfile="/var/run/udhcpc.${link_iface}.pid"
+
+	if dhcp_pid_alive "${link_iface}"; then
+		kill "${link_pid}" 2>/dev/null || true
+	fi
+	rm -f "${link_pidfile}"
+	ip -4 addr flush dev "${link_iface}" scope global 2>/dev/null || true
+	ip -4 route flush dev "${link_iface}" 2>/dev/null || true
+}
+
+start_dhcp()
+{
+	link_iface="$1"
+	stop_dhcp "${link_iface}"
+	ip link set dev "${link_iface}" up 2>/dev/null || return 1
+	/sbin/udhcpc -b -R -O search \
+		-p "/var/run/udhcpc.${link_iface}.pid" \
+		-i "${link_iface}" -x "hostname:$(hostname)" \
+		-T 1 -t 3 -A 3 >/dev/null 2>&1
+}
+
+sync_link()
+{
+	link_iface="$1"
+	link_sysfs="/sys/class/net/${link_iface}"
+	link_statefile="${NETWORK_DIR}/${link_iface}.carrier"
+
+	[ -d "${link_sysfs}" ] || return
+	link_carrier="$(cat "${link_sysfs}/carrier" 2>/dev/null || echo 0)"
+	link_previous="$(cat "${link_statefile}" 2>/dev/null)"
+
+	if [ "${link_carrier}" != "${link_previous}" ]; then
+		if [ "${link_carrier}" = "1" ]; then
+			dhcp_pid_alive "${link_iface}" || start_dhcp "${link_iface}"
+		else
+			stop_dhcp "${link_iface}"
+		fi
+		printf '%s\n' "${link_carrier}" > "${link_statefile}"
+	elif [ "${link_carrier}" = "1" ]; then
+		dhcp_pid_alive "${link_iface}" || start_dhcp "${link_iface}"
+	fi
+}
+
+monitor_links()
+{
+	trap 'exit 0' INT TERM
+	while :; do
+		for link_iface in ${MANAGED_INTERFACES}; do
+			sync_link "${link_iface}"
+		done
+		sleep 1
+	done
+}
+
+monitor_pid_alive()
+{
+	[ -r "${MONITOR_PIDFILE}" ] || return 1
+	read monitor_pid < "${MONITOR_PIDFILE}"
+	case "${monitor_pid}" in
+		''|*[!0-9]*) return 1 ;;
+	esac
+	kill -0 "${monitor_pid}" 2>/dev/null
+}
+
+start_monitor()
+{
+	monitor_pid_alive && return 0
+	rm -f "${MONITOR_PIDFILE}"
+	/sbin/start-stop-daemon -S -b -m -p "${MONITOR_PIDFILE}" \
+		-x "$0" -- monitor
+}
+
+stop_monitor()
+{
+	if monitor_pid_alive; then
+		kill "${monitor_pid}" 2>/dev/null || true
+	fi
+	rm -f "${MONITOR_PIDFILE}" "${NETWORK_DIR}"/eth*.carrier
+}
+
+case "$1" in
+	start)
+		printf "Starting network: "
+		/sbin/ifup -a
+		status=$?
+		start_monitor
+		[ "${status}" = 0 ] && echo "OK" || echo "FAIL"
+		exit "${status}"
+		;;
+	stop)
+		printf "Stopping network: "
+		stop_monitor
+		/sbin/ifdown -a
+		status=$?
+		for link_iface in ${MANAGED_INTERFACES}; do
+			stop_dhcp "${link_iface}"
+		done
+		[ "${status}" = 0 ] && echo "OK" || echo "FAIL"
+		exit "${status}"
+		;;
+	restart|reload)
+		"$0" stop
+		"$0" start
+		;;
+	monitor)
+		monitor_links
+		;;
+	status)
+		if monitor_pid_alive; then
+			echo "Ethernet link monitor is running (pid ${monitor_pid})"
+		else
+			echo "Ethernet link monitor is stopped"
+			exit 1
+		fi
+		;;
+	*)
+		echo "Usage: $0 {start|stop|restart|reload|status}"
+		exit 1
+		;;
+esac

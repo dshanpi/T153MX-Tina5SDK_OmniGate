@@ -8,4 +8,5 @@ if [ ! -d "$TARGET/.repo" ]; then
 fi
 echo "[OVERLAY] copy files from $SRC_DIR/overlay to $TARGET"
 (cd "$SRC_DIR/overlay" && tar -cpf - .) | (cd "$TARGET" && tar -xpf -)
-echo "Done: overlay copied. 删除动作未执行；如需删除，先审查 meta/delete_list.txt，再运行 scripts/apply_deletes.sh"
+"$SRC_DIR/scripts/verify_overlay.sh" "$TARGET"
+echo "Done: overlay copied and verified. 删除动作未执行；如需删除，先审查 meta/delete_list.txt，再运行 scripts/apply_deletes.sh"

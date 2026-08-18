@@ -1,7 +1,18 @@
 # T153MX-Tina5SDK_OmniGate
 
 > Allwinner T153 (4× Cortex-A7) Tina Linux SDK — **OmniGate** 板级配置与开发工具 overlay 包。
-> 本仓库是一个 **覆盖式差异备份（overlay package）**，包含对 T153 Tina SDK 的源码改动、板级配置、固件、AI 调试 skills 与工具，可一键应用到任意 T153 Tina SDK 工作树。
+> 本仓库是一个 **覆盖式差异备份（overlay package）**，包含对 T153 Tina SDK 的源码改动、板级配置、固件、根文件系统启动脚本、AI 调试 skills 与工具，可一键应用到兼容的 T153 Tina SDK 工作树。
+
+本次 overlay 与 `/home/ubuntu/T153_Tina5SDK-V1` 当前已验证工作树同步，主要包含：
+
+- AIC8800D80 Wi-Fi / Bluetooth 驱动、固件与自动启动配置；
+- 双网口自动 DHCP、链路断开后及时清理地址、重新插线后自动获取地址；
+- CAN0 / CAN1 默认以 1 Mbps 启动，并降低 runtime PM 无效日志；
+- TF 卡轮询检测、热插拔自动挂载/卸载以及 MMC 空卡轮询日志降噪；
+- 板载音频上电默认配置、三路 LED 控制与流水灯启动模式；
+- USB1 Host、双 4G 相关用户态软件包、G2D/LVGL 加速和 64 MiB CMA；
+- 4G 软件栈所需的 8 个 Buildroot 源码归档，可在无法访问 GitHub 等站点时离线命中；
+- Linux MIPI DSI 显示配置。U-Boot 显示驱动配置保留，但启动 Logo 默认关闭。
 
 ## 硬件概览
 
@@ -45,7 +56,9 @@ t153mx-ominigate-v1/
 │   ├── skills/                AI 辅助开发 skills（见下文）
 │   └── tools/                 OpenixCLI 烧录工具 + serial_agent 串口代理
 ├── meta/                      overlay 元数据
-│   ├── changed_files.tsv      实际新增/修改文件清单（相对 repo status）
+│   ├── changed_files.tsv      完整 overlay 交付文件清单
+│   ├── overlay_manifest.sha256 overlay 文件内容校验和
+│   ├── offline_4g_sources.tsv 4G 离线源码版本、路径与校验和
 │   ├── delete_list.txt        apply 时需要从 SDK 删除的旧固件清单
 │   ├── repo_status.txt        `repo status` 原始输出
 │   ├── repo_projects.txt      repo 项目列表
@@ -54,14 +67,16 @@ t153mx-ominigate-v1/
 │   └── errors.json
 └── scripts/                   应用脚本
     ├── apply_overlay.sh       把 overlay/ 拷到目标 SDK 工作树
+    ├── verify_overlay.sh      全量比较 overlay 与目标 SDK
+    ├── verify_offline_sources.sh 校验 4G 离线源码包
     └── apply_deletes.sh       按 meta/delete_list.txt 删除 SDK 中的旧文件
 ```
 
 ## 包含 / 排除
 
-**包含**：`repo status` 中实际新增/修改的源码、配置、下载包、固件包；未追踪目录完整展开复制。
+**包含**：影响 OmniGate 固件重编和运行行为的源码、配置、启动脚本、板级二进制与无线固件，以及随补丁交付的开发工具、AI skills 和经过校验的 4G 离线源码归档。
 
-**排除**：`out/`、`bak/`、`project/`、`a133-tina-aidesktop/`、`tools/OpenixCLI/`（外链）、`tools/serial_agent/`（外链）、`prebuilt/rootfsbuilt/`、`.local_patch/`、编译缓存目录。
+**排除**：`out/`、除 4G 离线归档以外的下载缓存、编译中间件、`*.bak*` / `*.orig*` 调试备份、`prebuilt/rootfsbuilt/` 和 `.local_patch/`。
 
 > 注意：`openwrt/target/` 和 `openwrt/openwrt/target/` 是源码配置目录，不按缓存排除。
 
@@ -74,9 +89,32 @@ t153mx-ominigate-v1/
 /path/to/t153mx-ominigate-v1/scripts/apply_overlay.sh /path/to/TinaSDK
 ```
 
-脚本会把 `overlay/` 下所有文件按相对路径 tar 拷贝到目标 SDK，**不执行任何删除动作**。
+脚本会把 `overlay/` 下所有文件按相对路径 tar 拷贝到目标 SDK，随后逐文件执行内容、符号链接和权限校验。脚本**不执行任何删除动作**。
 
-### 2. （可选）清理已被替换的旧固件
+也可以单独执行校验：
+
+```sh
+/path/to/T153MX-Tina5SDK_OmniGate/scripts/verify_overlay.sh /path/to/TinaSDK
+```
+
+### 2. 4G 软件包离线构建
+
+补丁会把以下源码直接放到 Buildroot 的标准 `dl/<package>/` 目录：
+
+- libmbim 1.26.2、libqmi 1.30.4、ModemManager 1.18.6；
+- libubox、uqmi；
+- pppd 2.4.9；
+- usb-modeswitch 2.6.1、usb-modeswitch-data 20191128。
+
+因此这些包不会再访问 GitHub、GitLab、OpenWrt Git 或上游下载站。应用脚本会自动检查八个归档的 SHA-256；也可单独运行：
+
+```sh
+/path/to/T153MX-Tina5SDK_OmniGate/scripts/verify_offline_sources.sh /path/to/TinaSDK
+```
+
+这里保证的是本方案新增的八个 4G 源码包可离线使用；如果客户的基础 SDK 本身缺少其他通用依赖缓存，Buildroot 仍可能为那些非 4G 新增项发起下载。
+
+### 3. （可选）清理已被替换的旧固件
 
 ```sh
 # 先人工审查清单
@@ -88,7 +126,7 @@ cat /path/to/t153mx-ominigate-v1/meta/delete_list.txt
 
 `delete_list.txt` 主要是 aic8800 旧版固件（已被 `*_u02.bin` 替代）。
 
-### 3. 编译 / 烧录 / 串口调试
+### 4. 编译 / 烧录 / 串口调试
 
 应用 overlay 后，按 T153 标准 Tina 流程：
 
@@ -96,7 +134,8 @@ cat /path/to/t153mx-ominigate-v1/meta/delete_list.txt
 # 在 SDK 根目录
 source build/envsetup.sh
 lunch t153_omnigate_mmc-buildroot
-make && pack
+./build.sh
+./build.sh pack
 ```
 
 烧录建议使用本仓库自带的 OpenixCLI：
@@ -139,9 +178,11 @@ nc 127.0.0.1 23334
 
 `meta/` 目录用于记录 overlay 的生成上下文，方便回溯：
 
-- `changed_files.tsv` — `repo status` 中所有 `M`/`??` 状态文件的清单（status + path）
+- `changed_files.tsv` — 完整 overlay 交付清单；`SYNC` 表示来自当前 SDK，`PKG` 表示补丁独立附带的工具或 skill
+- `overlay_manifest.sha256` — overlay 内普通文件的 SHA-256 校验和
+- `offline_4g_sources.tsv` — 4G 离线源码包的版本、目标路径、大小和 SHA-256
 - `delete_list.txt` — 需要从 SDK 删除的旧文件路径（一行一个，相对 SDK 根）
-- `repo_status.txt` — 生成时的 `repo status` 原始输出
+- `repo_status.txt` — 生成时逐个 SDK 子仓库采集的 `git status` 快照
 - `repo_projects.txt` — 生成时的 `repo project -l` 输出
 - `summary.json` — overlay 文件数 / 删除条目数 / 排除规则等汇总
 

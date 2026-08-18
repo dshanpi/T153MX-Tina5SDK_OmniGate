@@ -1,0 +1,58 @@
+#include <linux/slab.h>
+#include "aic_bsp_txrxif.h"
+#include "aic_bsp_driver.h"
+#include "aic_bsp_txq_prealloc.h"
+
+struct prealloc_txq{
+	int prealloced;
+	void *txq;
+	size_t size;
+};
+
+struct prealloc_txq prealloc_txq;
+#define MAX_TXQ_SIZE 100 * 1024
+
+void *aicwf_prealloc_txq_alloc(size_t size)
+{
+	pr_debug("%s, enter\n", __func__);
+	BUG_ON(size > MAX_TXQ_SIZE);
+
+	//check prealloc_txq.size
+	if ((int)prealloc_txq.size != (int)size) {
+		pr_debug("%s size differs, allocating a new txq\n", __func__);
+
+		if(prealloc_txq.txq != NULL) {
+			pr_debug("%s freeing old txq\n", __func__);
+			kfree(prealloc_txq.txq);
+			prealloc_txq.txq = NULL;
+		}
+
+		prealloc_txq.size = size;
+		prealloc_txq.prealloced = 0;
+	}
+
+	//check prealloc or not
+	if (!prealloc_txq.prealloced) {
+		prealloc_txq.txq = kzalloc(size, GFP_KERNEL);
+		if(!prealloc_txq.txq) {
+			pr_err("%s txq kzalloc failed\n", __func__);
+		} else {
+			pr_debug("%s txq kzalloc successful\n", __func__);
+			prealloc_txq.prealloced = 1;
+		}
+	} else {
+		pr_debug("%s reusing preallocated txq\n", __func__);
+	}
+
+	return prealloc_txq.txq;
+}
+void aicwf_prealloc_txq_free(void)
+{
+	if(prealloc_txq.txq != NULL) {
+		pr_debug("%s freeing txq\n", __func__);
+		kfree(prealloc_txq.txq);
+		prealloc_txq.txq = NULL;
+	}
+}
+
+EXPORT_SYMBOL(aicwf_prealloc_txq_alloc);

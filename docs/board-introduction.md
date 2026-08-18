@@ -70,13 +70,17 @@ USB 和无线连接等接口。
 
 | 功能 | 当前状态 | 说明 |
 | --- | --- | --- |
-| 双千兆以太网 | 已配置 | `gmac0`、`gmac1` 及对应 PHY 已在设备树启用 |
-| CAN FD | 已配置 | `can0`、`can1` 已配置 |
+| 双千兆以太网 | 已实板验证 | `eth0`、`eth1` 自动 DHCP；掉线清理地址，恢复链路后自动重获地址 |
+| CAN FD | 已实板验证 | `can0`、`can1` 默认 1 Mbps、`restart-ms=100` 并自动 UP |
 | Wi-Fi / Bluetooth | 已实板验证 | AIC8800D80，详见 [WLAN、蓝牙与 PCM 调试记录](./wlan-bluetooth-bringup.md) |
 | Bluetooth PCM | 已实板验证 | I2S0 使用 PB5～PB8 |
-| eMMC / TF Card | 已配置 | 当前构建目标为 eMMC Buildroot 方案 |
-| MIPI DSI 4-Lane | 调试中 | 背光、初始化和 DRM 已工作，仍有水平条纹，详见 [MIPI DSI 调试记录](./mipi-dsi-debug-record.md) |
-| 双 4G | 硬件支持 | 需按实际 4G 模块补充拨号和运营商配置 |
+| 板载音频 | 已实板验证 | AW8010 差分 LINEOUT，开机自动设置安全的播放增益 |
+| eMMC / TF Card | 已实板验证 | eMMC Buildroot；TF 卡使用软件轮询检测并自动挂载/卸载 |
+| USB Hub / Host | 已实板验证 | USB1 EHCI/OHCI 已启用，Hub 下高速 U 盘枚举正常 |
+| 三路状态灯 | 已实板验证 | 默认流水灯，可用 `ledctl` 切换多种模式或单独控制 |
+| G2D / LVGL | 已配置 | G2D200、ION CMA、LVGL G2D 示例已启用，CMA 为 64 MiB |
+| MIPI DSI 4-Lane | Linux 已实板验证 | Linux 图形与触摸正常；U-Boot Logo 默认关闭 |
+| 双 4G | 软件已配置、待实板验证 | 已启用 ModemManager、QMI/MBIM、PPP 和 usb-modeswitch；需按实际模块配置拨号 |
 
 “已配置”表示板级配置中已经启用相关控制器，不等同于所有外接设备、线材和
 应用场景均完成验证。
@@ -105,8 +109,8 @@ t153mx-ominigate-v1/
 ```sh
 source build/envsetup.sh
 lunch t153_omnigate_mmc-buildroot
-make
-pack
+./build.sh
+./build.sh pack
 ```
 
 当前镜像输出名称：

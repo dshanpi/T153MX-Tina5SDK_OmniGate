@@ -1,5 +1,7 @@
 # T153 OmniGate MIPI DSI 4-Lane 屏调试记录
 
+> 最终状态（2026-08-17）：Linux 阶段已经实板验证，可正常显示和触摸，水平条纹问题已消失。本文保留中间调试过程供追溯；交付配置以 overlay 中当前 `board.dts` 为准。U-Boot Logo 按产品要求默认关闭。
+
 ## 目标
 
 在 T153 OmniGate 板上点亮一款 MIPI DSI 4-lane 1024x768 RGB888 屏。
@@ -34,17 +36,21 @@
 - `&dsi0combophy { status = "okay"; };`
 - `&lvds0 { status = "disabled"; };`（避免 lvds bind 失败拖垮整个 drm）
 
-当前 timing 配置（RK 参考）：
-- clock-frequency = 50000000（50MHz）
+当前已验证 timing 配置（屏厂参数转换）：
+- clock-frequency = 25000000（25MHz）
 - hactive=1024, vactive=768
-- hfront-porch=10, hsync-len=5, hback-porch=20
-- vfront-porch=5, vsync-len=5, vback-porch=10
+- hfront-porch=5, hsync-len=5, hback-porch=16
+- vfront-porch=4, vsync-len=2, vback-porch=22
 - dsi,flags = (MIPI_DSI_MODE_VIDEO)（NON-BURST SYNC PULSES）
 - dsi,lanes = 4, dsi,format = 0 (RGB888)
 
-### 2. SDK 驱动代码（git 仓库外，需手动同步）
+### 2. SDK 驱动代码（历史实验，最终未交付）
 
-**`bsp/drivers/drm/panel/panel-dsi.c`** - 加调试日志（保留）
+调试期间曾修改 `panel-dsi.c` 增加命令日志，并修改 Linux `dsi_v1.c` 的水平时序公式。最终工作树已经恢复 Linux 原厂驱动，因此这两项实验修改不在当前 overlay 中；客户无需手动同步。
+
+历史调试内容如下：
+
+**`bsp/drivers/drm/panel/panel-dsi.c`** - 增加调试日志
 - `panel_dsi_prepare` 开头加 `dev_info("panel_dsi_prepare start")`
 - `panel_dsi_cmd_seq` 循环里加 `printk(KERN_INFO "DSI_CMD[%d/%d] ...")` 打印每条命令的 data_type/delay/len/payload[0] 和发送结果
 
@@ -91,7 +97,7 @@ dsi->reg->dsi_basic_ctl.bits.hbp_dis = 0;                    /* 启用 HBP */
 9. 加调试日志到 panel-dsi.c，确认 `panel_dsi_prepare` 被调用，32 条 init sequence 命令全部发送成功（DSI_CMD[1-32] OK，含 sleep out 0x11 + display on 0x29）
 10. `sunxi_drm_bind ok`，`/dev/fb0` 存在，`card0-DSI-1 enabled` - 软件层面全部就绪
 
-### 阶段 5：条纹问题调试（未解决）
+### 阶段 5：条纹问题调试（历史中间状态）
 
 11. 屏幕显示**水平细条纹**（纯色也有），说明 panel 锁定同步但行数据错位
 12. 尝试去掉 `MIPI_DSI_MODE_NO_EOT_PACKET` - 条纹不变
@@ -110,17 +116,18 @@ dsi->reg->dsi_basic_ctl.bits.hbp_dis = 0;                    /* 启用 HBP */
 - ✅ 背光正常（PWM 调光工作）
 - ✅ DSI panel init sequence 32 条命令全部发送成功
 - ✅ DRM bind 成功，`/dev/fb0` 存在，`card0-DSI-1 enabled`
-- ✅ 屏幕能显示颜色（写 fb0 能看到颜色变化）
-- ❌ **水平细条纹未消除**（纯色也有，说明是 DSI 同步/timing 问题，非数据问题）
+- ✅ Linux 阶段图像清晰、触摸正常，LVGL Demo 可正常显示
+- ✅ 最终采用 25 MHz 屏厂时序，水平细条纹已消失
+- ℹ️ U-Boot Logo 默认关闭，不作为当前交付功能
 
-## 未解决问题的可能原因
+## 历史阶段曾考虑的可能原因
 
 1. **T153 DSI PHY 信号完整性问题**（硬件）- T153 的 DSI PHY 跟 A133/RK 不同，HS 信号质量可能不满足 panel 要求，需要示波器测量 DSI HS clock 和 data lane 信号
 2. **DSI lane mapping 不匹配** - T153 的 PD0-PD9 到 lane0-3+CLK 的映射可能跟 panel 期望不同（SoC 硬件固定，无法软件配置）
 3. **DSI PHY 时序参数** - `bsp/drivers/drm/phy/sunxi_dsi_combophy.c` 的 hs_trail_set/hs_pre_set/lpx_tm_set 可能需要针对此 panel 调整
 4. **fb0 stride 跟 DSI HACT 不匹配** - fb0 是 32bpp（stride 4096），DSI 是 RGB888（HACT 3072），DRM 转换可能有微小问题
 
-## 下一步建议
+## 若后续更换屏幕并复现条纹
 
 1. **用示波器测量 DSI 信号** - 确认 HS clock 频率、data lane 信号质量、lane 时序
 2. **对比 A133 实际工作的 DSI 寄存器配置** - 在 A133 板上 dump DSI 控制器寄存器，跟 T153 对比

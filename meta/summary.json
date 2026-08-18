@@ -1,17 +1,20 @@
 {
-  "root": "/home/ubuntu/T153MX/T153_Tina_V1.0",
-  "package": "/home/ubuntu/T153MX/T153_Tina_V1.0/t153mx-ominigate-v1.4",
-  "overlay_files": 83,
+  "source_sdk": "/home/ubuntu/T153_Tina5SDK-V1",
+  "package": "/home/ubuntu/T153MX-Tina5SDK_OmniGate",
+  "generated_at": "2026-08-18",
+  "overlay_files": 99,
+  "sdk_synced_files": 74,
+  "package_only_files": 25,
+  "offline_4g_archives": 8,
+  "offline_4g_bytes": 8142771,
   "delete_entries": 0,
-  "skipped_entries": 0,
-  "exclude_top": [
-    "bak",
-    "t153mx-ominigate-v1.4",
-    "out"
-  ],
-  "exclude_prefixes": [
+  "excluded": [
+    "out/",
+    "download caches except verified 4G source archives",
+    "build intermediates",
+    "*.bak*",
+    "*.orig*",
     "prebuilt/rootfsbuilt/",
     ".local_patch/"
-  ],
-  "target_cache_rule": "exclude target dirs except openwrt/target and openwrt/openwrt/target"
+  ]
 }

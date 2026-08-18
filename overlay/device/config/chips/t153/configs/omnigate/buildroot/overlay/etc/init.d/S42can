@@ -1,0 +1,66 @@
+#!/bin/sh
+
+CAN_CONFIG="/etc/default/can"
+
+[ -r "${CAN_CONFIG}" ] && . "${CAN_CONFIG}"
+
+CAN0_BITRATE="${CAN0_BITRATE:-1000000}"
+CAN1_BITRATE="${CAN1_BITRATE:-1000000}"
+CAN_RESTART_MS="${CAN_RESTART_MS:-100}"
+CAN_TX_QUEUE_LEN="${CAN_TX_QUEUE_LEN:-1000}"
+
+is_uint()
+{
+	case "$1" in
+		''|*[!0-9]*) return 1 ;;
+		*) return 0 ;;
+	esac
+}
+
+start_can()
+{
+	interface="$1"
+	bitrate="$2"
+
+	if [ ! -d "/sys/class/net/${interface}" ]; then
+		echo "CAN: ${interface} is not available"
+		return 1
+	fi
+
+	if ! is_uint "${bitrate}" || ! is_uint "${CAN_RESTART_MS}" ||
+	   ! is_uint "${CAN_TX_QUEUE_LEN}"; then
+		echo "CAN: invalid settings for ${interface}"
+		return 1
+	fi
+
+	ip link set dev "${interface}" down 2>/dev/null || true
+	ip link set dev "${interface}" type can bitrate "${bitrate}" \
+		restart-ms "${CAN_RESTART_MS}" || return 1
+	ip link set dev "${interface}" txqueuelen "${CAN_TX_QUEUE_LEN}" up
+}
+
+stop_can()
+{
+	ip link set dev "$1" down 2>/dev/null || true
+}
+
+case "$1" in
+	start)
+		status=0
+		start_can can0 "${CAN0_BITRATE}" || status=1
+		start_can can1 "${CAN1_BITRATE}" || status=1
+		exit "${status}"
+		;;
+	stop)
+		stop_can can0
+		stop_can can1
+		;;
+	restart)
+		"$0" stop
+		"$0" start
+		;;
+	*)
+		echo "Usage: $0 {start|stop|restart}"
+		exit 1
+		;;
+esac

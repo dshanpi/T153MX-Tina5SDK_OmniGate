@@ -1,0 +1,56 @@
+#!/bin/sh
+
+CARD=0
+
+wait_for_mixer()
+{
+	wait_count=0
+	while ! amixer -c "${CARD}" controls >/dev/null 2>&1; do
+		wait_count=$((wait_count + 1))
+		if [ "${wait_count}" -ge 50 ]; then
+			echo "Audio: card ${CARD} mixer timed out"
+			return 1
+		fi
+		usleep 100000
+	done
+}
+
+start_audio()
+{
+	wait_for_mixer || return 1
+
+	# AW8010 is connected to the codec's differential LINEOUTP/LINEOUTN.
+	amixer -q -c "${CARD}" set 'DAC Output Select' differ || return 1
+	amixer -q -c "${CARD}" set 'DAC' 58 || return 1
+	amixer -q -c "${CARD}" set 'DACL' 160 || return 1
+	amixer -q -c "${CARD}" set 'LINEOUT Gain' 6 || return 1
+	amixer -q -c "${CARD}" set 'LINEOUTL' on || return 1
+	amixer -q -c "${CARD}" set 'SPK' on || return 1
+
+	echo "Audio: speaker output is ready"
+}
+
+stop_audio()
+{
+	amixer -q -c "${CARD}" set 'SPK' off 2>/dev/null || true
+	amixer -q -c "${CARD}" set 'LINEOUTL' off 2>/dev/null || true
+}
+
+case "$1" in
+	start)
+		start_audio
+		;;
+	stop)
+		stop_audio
+		;;
+	restart)
+		stop_audio
+		start_audio
+		;;
+	*)
+		echo "Usage: $0 {start|stop|restart}"
+		exit 1
+		;;
+esac
+
+exit $?

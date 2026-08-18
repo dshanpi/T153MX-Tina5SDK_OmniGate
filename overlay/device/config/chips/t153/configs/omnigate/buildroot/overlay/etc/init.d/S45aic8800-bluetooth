@@ -13,6 +13,21 @@ load_module()
 	module_loaded "$1" || insmod "${MODULE_DIR}/$1.ko"
 }
 
+start_wlan()
+{
+	wait_count=0
+	while [ ! -d /sys/class/net/wlan0 ]; do
+		usleep 100000
+		wait_count=$((wait_count + 1))
+		if [ "${wait_count}" -ge 100 ]; then
+			echo "AIC Wi-Fi: wlan0 creation timed out"
+			return 1
+		fi
+	done
+
+	ip link set dev wlan0 up
+}
+
 set_bt_rfkill()
 {
 	requested_state="$1"
@@ -32,6 +47,7 @@ start_bt()
 {
 	load_module aic8800_bsp || return 1
 	load_module aic8800_fdrv || return 1
+	start_wlan || return 1
 	load_module aic8800_btlpm || return 1
 
 	# The AIC BSP adds its own Bluetooth rfkill after the SoC rfkill.

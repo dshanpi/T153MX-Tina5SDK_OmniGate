@@ -32,25 +32,23 @@
 	leds {
 		compatible = "gpio-leds";
 
-		led-status {
-			label = "t153:status";
-			gpios = <&pio PJ 9 GPIO_ACTIVE_HIGH>;
+		led3 {
+			label = "t153:led3";
+			gpios = <&pio PJ 9 GPIO_ACTIVE_LOW>;
 			default-state = "on";
 			linux,default-trigger = "default-on";
 		};
 
-		led-heartbeat1 {
-			label = "t153:heartbeat1";
+		led2 {
+			label = "t153:led2";
 			gpios = <&pio PE 1 GPIO_ACTIVE_HIGH>;
-			default-state = "on";
-			linux,default-trigger = "heartbeat";
+			default-state = "off";
 		};
 
-		led-heartbeat2 {
-			label = "t153:heartbeat2";
+		led1 {
+			label = "t153:led1";
 			gpios = <&pio PE 2 GPIO_ACTIVE_HIGH>;
-			default-state = "on";
-			linux,default-trigger = "heartbeat";
+			default-state = "off";
 		};
 	};
 
@@ -211,7 +209,7 @@
 			240 241 242 243 244 245 246 247
 			248 249 250 251 252 253 254 255>;
 		default-brightness-level = <150>;
-		pwms = <&pwm2 6 25000 0>;
+		pwms = <&pwm2 6 20000 0>;
 	};
 
 	panel_0: panel_0@0 {
@@ -269,15 +267,15 @@
 		display-timings {
 			native-mode = <&timing0>;
 			timing0: timing0 {
-				clock-frequency = <24000000>;
+				clock-frequency = <25000000>;
 				hactive = <1024>;
 				vactive = <768>;
-				hfront-porch = <10>;
+				hfront-porch = <5>;
 				hsync-len = <5>;
-				hback-porch = <11>;
-				vfront-porch = <6>;
+				hback-porch = <16>;
+				vfront-porch = <4>;
 				vsync-len = <2>;
-				vback-porch = <20>;
+				vback-porch = <22>;
 				hsync-active = <0>;
 				vsync-active = <0>;
 				de-active = <0>;
@@ -933,14 +931,16 @@
 
 &sdc0 {
 	bus-width = <4>;
-	cd-gpios = <&pio PF 6 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+	/* PF6 card-detect is not reliable on this board; poll the SD bus. */
+	/* Hardware card-detect settings; re-enable after the PF6 circuit is fixed. */
+	/*cd-gpios = <&pio PF 6 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;*/
 	/*non-removable;*/
-	/*broken-cd;*/
+	broken-cd;
 	/*cd-inverted*/
 	/*data3-detect;*/
 	/*card-pwr-gpios = <&pio PH 14 1 1 2 0xffffffff>;*/
-	cd-used-24M;
-	cd-set-debounce = <0x1>;
+	/*cd-used-24M;*/
+	/*cd-set-debounce = <0x1>;*/
 	cap-sd-highspeed;
 	sd-uhs-sdr50;
 	sd-uhs-ddr50;
@@ -960,6 +960,7 @@
 	/*vdmmc18sw-supply = <&reg_aldo4>;*/
 	status = "okay";
 };
+
 &sdc3 {
         bus-width = <4>;
         no-mmc;
@@ -1052,12 +1053,12 @@
 
 &ehci1 {
 	drvvbus-supply = <&reg_usb1_vbus>;
-	status = "disabled";
+	status = "okay";
 };
 
 &ohci1 {
 	drvvbus-supply = <&reg_usb1_vbus>;
-	status = "disabled";
+	status = "okay";
 };
 
 &twi2 {
@@ -1075,9 +1076,9 @@
 		reg = <0x51>;
 	};
 
-	goodix_ts: touchscreen@5d {
+	goodix_ts: touchscreen@14 {
 		compatible = "goodix,gt911";
-		reg = <0x5d>;
+		reg = <0x14>;
 		pinctrl-names = "default";
 		pinctrl-0 = <&goodix_int_pin>;
 		interrupt-parent = <&pio>;
@@ -1290,14 +1291,20 @@
 &codec {
 	tx-hub-en;
 
-	dac-vol		= <63>;		/* default value:63 range:0->63 */
+	dac-vol		= <58>;		/* tested speaker volume, range:0->63 */
 	dacl-vol	= <160>;	/* default value:160 range:0->255 */
-	lineout-gain	= <31>;		/* default value:31 range:0->31 */
+	lineout-gain	= <6>;		/* tested speaker gain, ALSA range:0->7 */
 
+	/*
+	 * AW8010 SHUTDOWN# is biased high by hardware, so this board does not
+	 * need a software-controlled PA GPIO. Keep the template for a future
+	 * hardware revision.
+	 *
 	pa-pin-max	= <1>;
 	pa-pin-0	= <>;
 	pa-pin-level-0	= <1>;
 	pa-pin-msleep-0	= <0>;
+	 */
 
 	status = "okay";
 };

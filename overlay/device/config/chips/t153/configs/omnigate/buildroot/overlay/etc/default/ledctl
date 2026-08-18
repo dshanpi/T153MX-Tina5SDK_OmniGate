@@ -1,0 +1,4 @@
+# Default board LED animation.
+# Modes: flow, bounce, alternate, blink, heartbeat, dance
+LEDCTL_MODE="flow"
+LEDCTL_INTERVAL_MS="250"

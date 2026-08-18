@@ -1,0 +1,37 @@
+#!/bin/sh
+
+LEDCTL="/usr/bin/ledctl"
+CONFIG="/etc/default/ledctl"
+
+[ -r "${CONFIG}" ] && . "${CONFIG}"
+
+LEDCTL_MODE="${LEDCTL_MODE:-flow}"
+LEDCTL_INTERVAL_MS="${LEDCTL_INTERVAL_MS:-250}"
+
+case "$1" in
+	start)
+		printf 'Starting board LED animation: '
+		if "${LEDCTL}" mode "${LEDCTL_MODE}" "${LEDCTL_INTERVAL_MS}"; then
+			echo "OK"
+		else
+			echo "FAIL"
+			exit 1
+		fi
+		;;
+	stop)
+		printf 'Stopping board LED animation: '
+		"${LEDCTL}" stop
+		echo "OK"
+		;;
+	restart|reload)
+		"$0" stop
+		"$0" start
+		;;
+	status)
+		"${LEDCTL}" status
+		;;
+	*)
+		echo "Usage: $0 {start|stop|restart|reload|status}"
+		exit 1
+		;;
+esac
