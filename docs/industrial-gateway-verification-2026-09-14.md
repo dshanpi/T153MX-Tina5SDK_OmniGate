@@ -10,9 +10,9 @@ RS485、Wi-Fi、蓝牙、ADB、SOEM、CANopen 和 OmniGate Web 均能启动或�
 
 验收同时发现旧 Buildroot 输出目录没有自动吸收 defconfig 中的 ModemManager 选项。
 重新载入 defconfig 后，已补齐 ModemManager 1.18.6、`mmcli`、QMI、MBIM 和 `uqmi`，
-并生成修正版镜像。修正版的第二次烧写在写入任何分区前发生 USB 传输错误；按 FES
-安全规则没有自动重试。因此，修正版镜像已通过主机侧构建与结构校验，但仍需恢复
-FEL 后完成最终烧写和板端复验。
+并生成修正版镜像。全擦除模式受目标 USB 链路不稳定影响，恢复过程中出现过擦除标记
+传输失败和加载固件超时；重新传输并校验镜像缓存、复位目标后，使用分区模式成功写入
+并校验全部 12 个分区，随后自动重启。修正版已在板端完成最终复验。
 
 ## 可复现构建
 
@@ -76,24 +76,32 @@ Lynx 通过绑定的 COM19 Linux `#` 提示符执行固定 `reboot efex`，FES �
   `{"ok":true,"service":"omnigate-web"}`。
 - ThingsBoard Gateway 已安装但按设计默认禁用，配置 Token 后才允许启动。
 
-## 修正版二次烧写状态
+## 修正版烧写恢复与最终状态
 
-修正版镜像已传到 Lynx 缓存，传输后的 SHA-256 与 SDK 主机一致。开发板再次从已
-验证的 Linux shell 进入 FEL，目标 USB 位置仍与项目绑定一致。第二次
-`full_erase + verify + reboot` 在 12% 的擦除标记传输阶段终止：
+修正版镜像传到 Lynx 缓存后，缓存文件与 SDK 主机的大小和 SHA-256 完全一致。开发板
+从已验证的 Linux shell 进入 FEL，目标 USB 位置与项目绑定一致。最初的
+`full_erase + verify + reboot` 在擦除标记传输阶段遇到 USB 传输错误，后续个别尝试
+停留在加载固件阶段。目标复位并重新确认 FES 后，改用 `partition + verify + reboot`
+恢复写入；此前成功的全量烧写已经建立了同一镜像布局，因此无需再次擦除介质。
 
-```text
-phase=verify
-transferredBytes=0
-committedBytes=null
-verifyErrorCode=-1
-postFlashState=not_run
-USB transfer failed
-```
+最终 Lynx 任务 `flash-1789444086119233600` 完成状态：
 
-失败后 FEL/FES USB 设备仍可扫描到，但依照 Allwinner FES 流程，失败任务不得自动
-重试。恢复 FEL 并获得新的重试授权后，应重新烧写修正版，再以串口确认 `mmcli
---version`、`ModemManager --version` 和 `/api/health`。
+- 状态和阶段：`success / complete`，进度 100%
+- 分区写入：全部完成，共 `462744576` bytes
+- 介质提交：`462926744` bytes
+- 校验：成功，错误码 0；Boot0 和 Boot1 均通过校验
+- 烧写后动作：自动重启成功（第 2 次检测确认）
+- 退出码：0
+
+重启后 COM19 回到 Linux `#` 提示符。修正版板端复验结果：
+
+- `mmcli 1.18.6`、`ModemManager 1.18.6`、`qmicli 1.30.4`
+- `/usr/sbin/ModemManager` 正在运行
+- `/usr/bin/omnigate-ethercat` 存在
+- Python 可导入 `canopen`、`flask`、`jsonpath_rw`
+- `can0`、`can1` 均正常枚举，并按安全策略保持 DOWN
+- OmniGate Web 进程运行，`GET /api/health` 返回
+  `{"ok":true,"service":"omnigate-web"}`
 
 ## 工业外设边界
 
