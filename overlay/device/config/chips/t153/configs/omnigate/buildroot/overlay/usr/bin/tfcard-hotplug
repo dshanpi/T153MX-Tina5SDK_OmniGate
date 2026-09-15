@@ -1,0 +1,83 @@
+#!/bin/sh
+
+ACTION="$1"
+DEVICE="$2"
+FS_TYPE="$3"
+MOUNT_ROOT="/mnt/sdcard"
+
+case "${DEVICE}" in
+	mmcblk1|mmcblk1p[0-9]*) ;;
+	*) exit 1 ;;
+esac
+
+is_mounted()
+{
+	awk -v target="$1" '$2 == target { found = 1 } END { exit !found }' \
+		/proc/mounts
+}
+
+mount_device()
+{
+	device_node="/dev/${DEVICE}"
+	mount_point="${MOUNT_ROOT}/${DEVICE}"
+
+	[ -b "${device_node}" ] || return 1
+	is_mounted "${mount_point}" && return 0
+
+	mkdir -p "${mount_point}" || return 1
+
+	case "${FS_TYPE}" in
+		vfat|fat|msdos)
+			mount -t vfat -o rw,noatime,utf8,umask=000 \
+				"${device_node}" "${mount_point}"
+			;;
+		exfat)
+			# Use the in-kernel exFAT driver.  mount.exfat in this image is
+			# the FUSE helper, but the kernel has no fuse device/module.
+			mount -t exfat -o rw,noatime,umask=000 \
+				"${device_node}" "${mount_point}"
+			;;
+		ntfs|ntfs3)
+			mount.ntfs-3g -o rw,noatime,umask=000 \
+				"${device_node}" "${mount_point}"
+			;;
+		"")
+			mount -o rw,noatime "${device_node}" "${mount_point}"
+			;;
+		*)
+			mount -t "${FS_TYPE}" -o rw,noatime \
+				"${device_node}" "${mount_point}"
+			;;
+	esac
+	status=$?
+
+	if [ "${status}" -ne 0 ]; then
+		rmdir "${mount_point}" 2>/dev/null
+	fi
+
+	return "${status}"
+}
+
+remove_device()
+{
+	for mount_point in "${MOUNT_ROOT}/${DEVICE}" "${MOUNT_ROOT}/${DEVICE}"p*; do
+		[ -d "${mount_point}" ] || continue
+		if is_mounted "${mount_point}"; then
+			umount -l "${mount_point}" || return 1
+		fi
+		rmdir "${mount_point}" 2>/dev/null || true
+	done
+}
+
+case "${ACTION}" in
+	add)
+		mount_device
+		;;
+	remove)
+		remove_device
+		;;
+	*)
+		echo "Usage: $0 {add|remove} <device> [filesystem]"
+		exit 1
+		;;
+esac

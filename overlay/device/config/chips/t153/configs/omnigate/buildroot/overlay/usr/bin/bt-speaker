@@ -33,10 +33,10 @@ stop_process()
 
 enable_speaker_path()
 {
-	# Keep the codec gain conservative; phone volume can then be used normally.
-	amixer -c 0 set 'DAC' 63 >/dev/null 2>&1 || true
+	# Keep the codec at the board-validated speaker volume.
+	amixer -c 0 set 'DAC' 58 >/dev/null 2>&1 || true
 	amixer -c 0 set 'DACL' 160 >/dev/null 2>&1 || true
-	amixer -c 0 set 'LINEOUT Gain' 7 >/dev/null 2>&1 || true
+	amixer -c 0 set 'LINEOUT Gain' 6 >/dev/null 2>&1 || true
 	# AW8010 is wired to the codec's differential LINEOUTP/LINEOUTN pair.
 	amixer -c 0 set 'DAC Output Select' differ >/dev/null 2>&1 || true
 	amixer -c 0 set 'LINEOUTL' on >/dev/null 2>&1 || true

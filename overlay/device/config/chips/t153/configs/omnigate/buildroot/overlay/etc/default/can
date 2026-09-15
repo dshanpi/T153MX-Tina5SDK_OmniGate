@@ -1,0 +1,5 @@
+# Default SocketCAN settings. Values are in bits per second.
+CAN0_BITRATE=1000000
+CAN1_BITRATE=1000000
+CAN_RESTART_MS=100
+CAN_TX_QUEUE_LEN=1000
