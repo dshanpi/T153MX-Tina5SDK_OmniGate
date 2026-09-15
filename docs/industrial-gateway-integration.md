@@ -17,6 +17,32 @@
 SOEM 2.0.0 以共享库 `libsoem.so` 和示例程序形式编入镜像。SOEM 采用
 GPL-3.0 或商业授权；产品发布前需根据交付方式确认采用的授权路径。
 
+## 系统架构
+
+```text
+                                 ┌─────────────────────┐
+                                 │ ThingsBoard / MQTT  │
+                                 └──────────▲──────────┘
+                                            │ eth1 / Wi-Fi / 双 EC20
+┌───────────────────────────────────────────┴────────────────────────────┐
+│                         T153MX OmniGate                                │
+│  ┌──────────────┐    ┌─────────────────────────────────────────────┐  │
+│  │ Web 管理/API │───▶│ 配置、状态、诊断与受保护的控制服务          │  │
+│  └──────────────┘    └──────┬──────────┬──────────┬───────────────┘  │
+│                              │          │          │                  │
+│                    ThingsBoard GW   python-canopen  SOEM 主站          │
+│                              │          │          │                  │
+└──────────────────────────────┼──────────┼──────────┼──────────────────┘
+                               │          │          │
+                         ttyAS5/RS485  can0/can1   eth0（专用）
+                               │          │          │
+                         Modbus RTU    CANopen     EtherCAT 从站链
+```
+
+启动阶段先初始化网络和现场总线接口，再启动 Web 服务；ThingsBoard 在配置有效
+Token 后才启用。控制接口默认只允许发现、诊断和零位保持，现场设备的量程、方向、
+急停和限位未确认前不自动执行规划运动。
+
 ## Web 管理页面
 
 板子联网后直接打开：
@@ -74,6 +100,12 @@ cd /path/to/T153_Tina_V1.0
 
 ./build.sh config
 # linux / buildroot / t153 / omnigate / default / linux-5.10-origin
+
+# 已有输出目录也必须重新载入方案 defconfig，避免漏装后续新增软件包
+make -C buildroot/buildroot-202205 \
+    O="$PWD/out/t153/omnigate/buildroot/buildroot" \
+    sun8iw22p1_t153_mmc_defconfig
+
 ./build.sh
 ./build.sh pack
 ```

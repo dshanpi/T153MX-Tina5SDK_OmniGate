@@ -142,14 +142,23 @@ cat /path/to/t153mx-ominigate-v1/meta/delete_list.txt
 
 ```sh
 # 在 SDK 根目录
-source build/envsetup.sh
-lunch t153_omnigate_mmc-buildroot
+./build.sh config
+# 依次选择：linux / buildroot / t153 / omnigate / default /
+# linux-5.10-origin
+
+# 必须让现有输出目录重新载入本方案的 Buildroot defconfig；仅有正确的
+# .buildconfig 并不会自动启用后来新增的软件包。
+make -C buildroot/buildroot-202205 \
+    O="$PWD/out/t153/omnigate/buildroot/buildroot" \
+    sun8iw22p1_t153_mmc_defconfig
+
 ./build.sh
 ./build.sh pack
 ```
 
-若当前 SDK 尚未生成构建配置，也可以先运行 `./build.sh config`，依次选择
-`linux / buildroot / t153 / omnigate / default / linux-5.10-origin`。
+已有正确 `.buildconfig` 时可跳过 `./build.sh config`，但仍应执行上面的
+Buildroot `defconfig` 命令，防止旧 `.config` 静默漏掉 ModemManager 等新增包。
+本 SDK 的 `build/envsetup.sh` 不提供 Android 风格的 `lunch` 命令。
 
 生成的默认镜像为 `out/t153_linux_omnigate_uart0.img`。
 
@@ -184,6 +193,8 @@ tools/OpenixCLI/openixcli flash --verify true --mode full_erase \
 验收清单见 [2026-07-29 续作记录](./docs/industrial-gateway-development-2026-07-29.md)。
 分支所含代码、配置、构建结果及待验项目汇总在
 [Gateway CANopen / EtherCAT 交付清单](./docs/gateway-canopen-ethercat-change-set.md)。
+最新一次完整构建、Lynx 烧写和板端验收结果见
+[2026-09-14 实板验证记录](./docs/industrial-gateway-verification-2026-09-14.md)。
 
 串口调试建议使用自带的 serial_agent（独占式串口代理，避免多人/多终端抢占 `/dev/ttyACM0`）：
 

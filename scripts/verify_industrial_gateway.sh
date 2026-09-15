@@ -54,16 +54,16 @@ BR_CONFIG=out/t153/omnigate/buildroot/buildroot/.config
 K_CONFIG=out/t153/kernel/build/.config
 if [ -f "$SDK/$BR_CONFIG" ]; then
 	check_config "$BR_CONFIG" BR2_PACKAGE_SOEM
-	if grep -q '^BR2_PACKAGE_OMNIGATE_ETHERCAT=y$' "$SDK/$BR_CONFIG"; then
-		check_config "$BR_CONFIG" BR2_PACKAGE_OMNIGATE_ETHERCAT
-	else
-		printf 'SKIP %s: BR2_PACKAGE_OMNIGATE_ETHERCAT (旧构建配置，重新 defconfig 后启用)\n' "$BR_CONFIG"
-	fi
+	check_config "$BR_CONFIG" BR2_PACKAGE_OMNIGATE_ETHERCAT
 	check_config "$BR_CONFIG" BR2_PACKAGE_THINGSBOARD_GATEWAY
 	check_config "$BR_CONFIG" BR2_PACKAGE_NTP
 	check_config "$BR_CONFIG" BR2_PACKAGE_PYTHON_CANOPEN
 	check_config "$BR_CONFIG" BR2_PACKAGE_PYTHON_FLASK
+	check_config "$BR_CONFIG" BR2_PACKAGE_MODEM_MANAGER
+	check_config "$BR_CONFIG" BR2_PACKAGE_MODEM_MANAGER_LIBQMI
+	check_config "$BR_CONFIG" BR2_PACKAGE_MODEM_MANAGER_LIBMBIM
 	check_config "$BR_CONFIG" BR2_PACKAGE_LIBQMI
+	check_config "$BR_CONFIG" BR2_PACKAGE_LIBMBIM
 	check_config "$BR_CONFIG" BR2_PACKAGE_PPPD
 else
 	printf 'SKIP %s (尚未完成 Buildroot 配置/编译)\n' "$BR_CONFIG"
@@ -79,6 +79,9 @@ fi
 
 if [ -d "$SDK/out/t153/omnigate/buildroot/buildroot/target" ]; then
 	check_exec out/t153/omnigate/buildroot/buildroot/target/usr/bin/omnigate-ethercat
+	check_exec out/t153/omnigate/buildroot/buildroot/target/usr/bin/mmcli
+	check_exec out/t153/omnigate/buildroot/buildroot/target/usr/bin/qmicli
+	check_exec out/t153/omnigate/buildroot/buildroot/target/usr/sbin/ModemManager
 fi
 
 if [ "$FAILED" -ne 0 ]; then
