@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://omnigate.local/schemas/device-template-v1.json",
+  "title": "OmniGate Device Template",
+  "type": "object",
+  "required": ["schema_version", "id", "name", "protocol", "points"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,63}$"},
+    "name": {"type": "string", "minLength": 1, "maxLength": 128},
+    "protocol": {"enum": ["modbus-rtu", "modbus-tcp", "canopen", "ethercat", "opcua", "mqtt", "http"]},
+    "points": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "data_type", "address", "access"],
+        "properties": {
+          "id": {"type": "string"}, "name": {"type": "string"},
+          "data_type": {"enum": ["bool", "int8", "uint8", "int16", "uint16", "int32", "uint32", "int64", "uint64", "float", "double", "string", "bytes"]},
+          "address": {"type": "string"}, "access": {"enum": ["r", "w", "rw"]},
+          "unit": {"type": "string"}, "scale": {"type": "number"}
+        }
+      }
+    }
+  }
+}

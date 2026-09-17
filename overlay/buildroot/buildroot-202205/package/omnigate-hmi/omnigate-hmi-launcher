@@ -1,0 +1,62 @@
+#!/bin/sh
+
+export QT_QPA_PLATFORM="${QT_PLATFORM:-linuxfb:fb=/dev/fb0}"
+export QT_QPA_PLATFORM_PLUGIN_PATH=/usr/lib/qt/plugins
+# linuxfb's basic font database does not recurse into font subdirectories.
+# Point it at the directory which actually contains the TTC file, otherwise
+# widgets are painted but every Latin/CJK glyph is blank.
+export QT_QPA_FONTDIR=/usr/share/fonts/wqy-zenhei
+export QT_QPA_EVDEV_TOUCHSCREEN_PARAMETERS=/dev/input/touchscreen
+export QT_QPA_GENERIC_PLUGINS=evdevtouch:/dev/input/touchscreen
+export QT_LOGGING_RULES="qt.qpa.input=false"
+
+mkdir -p /dev/shm /var/log /var/lib/omnigate-hmi
+
+# Some T153 panel revisions retain a stale PWM/panel power state across a warm
+# reboot even though sysfs reports the backlight as enabled.  Re-assert the
+# standard Linux unblank sequence before the first frame is painted.
+if [ -w /sys/class/graphics/fb0/blank ]; then
+	echo 0 > /sys/class/graphics/fb0/blank
+fi
+for backlight in /sys/class/backlight/*; do
+	[ -d "$backlight" ] || continue
+	brightness=$(cat "$backlight/brightness" 2>/dev/null || echo 150)
+	[ "$brightness" -gt 0 ] 2>/dev/null || brightness=150
+	if [ -w "$backlight/bl_power" ]; then
+		echo 4 > "$backlight/bl_power"
+		sleep 0.2
+		echo 0 > "$backlight/bl_power"
+	fi
+	[ -w "$backlight/brightness" ] && echo "$brightness" > "$backlight/brightness"
+done
+
+rm -f /dev/input/touchscreen
+for input in /sys/class/input/input*; do
+	[ -r "$input/name" ] || continue
+	name=$(cat "$input/name")
+	case "$name" in
+		*Goodix*|*goodix*|*TouchScreen*|*touchscreen*)
+			for event in "$input"/event*; do
+				[ -e "$event" ] || continue
+				ln -sf "/dev/input/${event##*/}" /dev/input/touchscreen
+				break 2
+			done
+			;;
+	esac
+done
+
+child=""
+stop_child()
+{
+	[ -n "$child" ] && kill "$child" 2>/dev/null
+	exit 0
+}
+trap stop_child TERM INT
+
+while :; do
+	/usr/bin/omnigate-hmi >>/var/log/omnigate-hmi.log 2>&1 &
+	child=$!
+	wait "$child"
+	child=""
+	sleep 2
+done

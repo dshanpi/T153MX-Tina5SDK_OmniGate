@@ -26,6 +26,9 @@ start()
 	echo "Starting $NAME..."
 	OMNIGATE_LISTEN_ADDRESS="$LISTEN_ADDRESS" \
 	OMNIGATE_LISTEN_PORT="$LISTEN_PORT" \
+	OMNIGATE_TLS_CERT="${TLS_CERT:-}" \
+	OMNIGATE_TLS_KEY="${TLS_KEY:-}" \
+	OMNIGATE_HTTPS="$([ -n "${TLS_CERT:-}" ] && [ -n "${TLS_KEY:-}" ] && echo 1 || echo 0)" \
 		start-stop-daemon -S -b -m -p "$PIDFILE" -x "$DAEMON" \
 		-- "$APP" >>"$LOGFILE" 2>&1
 }

@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "board_id": "omnigate-t153mx-v1",
+  "soc": "allwinner-t153",
+  "architecture": "armv7-a",
+  "runtime_profile": "lite",
+  "capabilities": [
+    "display", "touch", "can-fd", "canopen", "modbus-rtu",
+    "ethercat", "dual-cellular", "wifi", "bluetooth", "ab-update"
+  ],
+  "channels": {
+    "fieldbus0": {"kind": "ethernet", "device": "eth0", "role": "ethercat", "exclusive": true},
+    "management0": {"kind": "ethernet", "device": "eth1", "role": "management"},
+    "can0": {"kind": "can", "device": "can0", "role": "fieldbus"},
+    "can1": {"kind": "can", "device": "can1", "role": "fieldbus"},
+    "rs485_0": {"kind": "serial", "device": "/dev/ttyAS5", "role": "modbus-rtu"},
+    "cellular0": {"kind": "cellular", "device": "/dev/cdc-wdm0", "role": "wan"},
+    "cellular1": {"kind": "cellular", "device": "/dev/cdc-wdm1", "role": "wan-backup"},
+    "wifi0": {"kind": "wifi", "device": "wlan0", "role": "wan"},
+    "display0": {"kind": "display", "device": "/dev/fb0", "role": "local-hmi"}
+  },
+  "update": {
+    "strategy": "ab",
+    "slots": ["rootfsA", "rootfsB"],
+    "boot_slots": ["bootA", "bootB"]
+  },
+  "security": {
+    "hardware_identity": "required-on-production-board",
+    "development_adb": true
+  }
+}

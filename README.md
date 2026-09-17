@@ -3,6 +3,10 @@
 > Allwinner T153 (4× Cortex-A7) Tina Linux SDK — **OmniGate** 板级配置与开发工具 overlay 包。
 > 本仓库是一个 **覆盖式差异备份（overlay package）**，包含对 T153 Tina SDK 的源码改动、板级配置、固件、根文件系统启动脚本、AI 调试 skills 与工具，可一键应用到兼容的 T153 Tina SDK 工作树。
 
+其中 `omnigate-platform/`、统一 `/api/v1`、Web/HMI、supervisor 与测试框架正在
+整理为可复用的 **OmniGate Industrial Desktop**。应用层按 GPL-3.0-only 发布；
+Allwinner BSP、无线固件和厂商工具仍遵循各自许可，不能笼统标记为开源。
+
 本次 overlay 与 `/home/ubuntu/T153_Tina5SDK-V1` 当前已验证工作树同步，主要包含：
 
 - AIC8800D80 Wi-Fi / Bluetooth 驱动、固件与自动启动配置；
@@ -47,6 +51,13 @@ t153mx-ominigate-v1/
 ├── LICENSE                    仓库许可证
 ├── .gitignore
 ├── images/                    硬件实物图
+├── omnigate-platform/         板卡无关的工业控制桌面产品层
+│   ├── profiles/              Lite / Enhanced 运行配置
+│   ├── boards/                板卡描述与验证状态
+│   ├── contracts/             /api/v1 与 MQTT 契约
+│   ├── schemas/               机器可读数据 Schema
+│   ├── docs/                  架构、移植和发布规则
+│   └── apps/node-red/         Enhanced Node-RED 受限容器配置
 ├── overlay/                   覆盖到 Tina SDK 工作树的差异文件
 │   ├── bsp/                   驱动源码改动（aic8800_btlpm.c 等）
 │   ├── buildroot/             buildroot defconfig 改动
@@ -81,6 +92,19 @@ t153mx-ominigate-v1/
 > 注意：`openwrt/target/` 和 `openwrt/openwrt/target/` 是源码配置目录，不按缓存排除。
 
 ## 使用方法
+
+### 0. 软件测试与发布打包
+
+```sh
+make test-bootstrap          # 首次创建隔离测试环境
+make test                    # API、Web/HMI、Python、Shell、Node-RED 静态测试
+make verify-sdk SDK_ROOT=..  # 核对 overlay 与当前 SDK
+make gate RELEASE_CLASS=development PROFILE=lite
+OMNIGATE_RELEASE_VERSION=0.1.0 make package
+```
+
+打包会分别输出可复用的平台源码包和包含 T153 厂商内容的集成包，详见
+[开源发布模型](./docs/open-source-release.md)。
 
 ### 1. 应用 overlay 到现有 Tina SDK 工作树
 
@@ -196,6 +220,10 @@ tools/OpenixCLI/openixcli flash --verify true --mode full_erase \
 最新一次完整构建、Lynx 烧写和板端验收结果见
 [2026-09-14 实板验证记录](./docs/industrial-gateway-verification-2026-09-14.md)。
 
+通用产品分层、跨板移植约束和 Lite/Enhanced 边界见
+[`omnigate-platform/README.md`](./omnigate-platform/README.md)。板卡应用不得写死 Linux
+设备名，应通过 `/etc/omnigate/platform.json` 和统一 `/api/v1` 解析逻辑通道。
+
 串口调试建议使用自带的 serial_agent（独占式串口代理，避免多人/多终端抢占 `/dev/ttyACM0`）：
 
 ```sh
@@ -208,7 +236,7 @@ nc 127.0.0.1 23334
 
 ## AI Skills
 
-`overlay/skills/` 下提供 5 个用于 Claude / Trae 等 AI Agent 的开发 skill：
+`overlay/skills/` 下提供 7 个用于 Codex / Claude / Trae 等 AI Agent 的开发 skill：
 
 | Skill | 用途 |
 | --- | --- |
@@ -217,8 +245,12 @@ nc 127.0.0.1 23334
 | `t153-c906-heterogeneous-dev` | T153 A7 Linux + C906 RTOS 异构开发联调（remoteproc / RPMsg / amp_shell） |
 | `t153-lvgl-ui-demo-dev` | 在 T153 上创建 / 交叉编译 / 烧写 / 验证 LVGL 界面示例 |
 | `serial-agent-daemon` | T153 串口独占代理（single-owner）使用规范，避免串口抢占冲突 |
+| `omnigate-release-gate` | 按系统门禁审查构建、烧写、实板、老化、安全与发布证据 |
+| `t153-goodix-touch-debug` | 按 DTS → DTB → probe → event → 物理触摸证据链定位 GT911 |
 
 每个 skill 目录下的 `SKILL.md` 是触发条件 + 操作流程的完整说明，AI Agent 会按需调用。
+系统发布门禁规范见
+[`omnigate-platform/docs/system-gate-requirements.md`](./omnigate-platform/docs/system-gate-requirements.md)。
 
 ## 工具
 

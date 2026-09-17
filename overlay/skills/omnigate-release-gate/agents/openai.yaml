@@ -1,0 +1,4 @@
+interface:
+  display_name: "OmniGate Release Gate"
+  short_description: "Audit release evidence against system gates"
+  default_prompt: "Use $omnigate-release-gate to audit this build and give an evidence-backed go/no-go verdict."

@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://omnigate.local/schemas/board-descriptor.schema.json",
+  "title": "OmniGate board descriptor",
+  "type": "object",
+  "required": ["schema_version", "id", "soc", "architecture", "build_system", "supported_profiles", "runtime_manifest", "validation_status"],
+  "properties": {
+    "$schema": {"type": "string"},
+    "schema_version": {"const": 1},
+    "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]+$"},
+    "vendor": {"type": "string"},
+    "soc": {"type": "string", "minLength": 1},
+    "architecture": {"type": "string", "minLength": 1},
+    "build_system": {"type": "string", "minLength": 1},
+    "supported_profiles": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+    "runtime_manifest": {"type": "string", "minLength": 1},
+    "board_support_component": {"type": "string"},
+    "display": {"type": "object"},
+    "validation_status": {"type": "string"},
+    "limitations": {"type": "array", "uniqueItems": true, "items": {"type": "string"}}
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,4 @@
+#!/bin/sh
+# DshanControl Lite does not expose an NFS server. Keep this overlay stub so
+# incremental Buildroot output cannot retain an older rpc.nfsd init script.
+exit 0

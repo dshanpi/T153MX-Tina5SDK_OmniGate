@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "product_version": "0.1.0-dev",
+  "profiles": {
+    "lite": {
+      "software_tests": "passed",
+      "t153mx_short_board_test": "passed-with-peripheral-limitations",
+      "soak_24h": "not-run"
+    },
+    "enhanced": {
+      "host_node_red_test": "passed",
+      "rk3568_board_test": "not-run",
+      "t536_board_test": "not-run"
+    }
+  },
+  "production_security": "not-certified",
+  "gate_policy": "gates/system-gates.json",
+  "gate_assessment": {
+    "G0": {
+      "status": "passed",
+      "evidence": [
+        "docs/software-verification-2026-09-16.md"
+      ]
+    },
+    "G1": {
+      "status": "passed",
+      "evidence": [
+        "docs/software-verification-2026-09-16.md",
+        "../acceptance-results/bootclean-20260916/final-report.md"
+      ]
+    },
+    "G2": {
+      "status": "passed",
+      "evidence": [
+        "docs/goodix-platform-continuation-2026-09-16.md",
+        "docs/software-verification-2026-09-16.md"
+      ]
+    },
+    "G3": {
+      "status": "passed-with-limitations",
+      "evidence": [
+        "docs/software-verification-2026-09-16.md",
+        "../acceptance-results/bootclean-20260916/final-report.md"
+      ],
+      "limitations": [
+        "No external CANopen, Modbus, or EtherCAT slave was attached.",
+        "The physical touch result is an operator confirmation; automated coordinate coverage was not recorded."
+      ]
+    },
+    "G4": {
+      "status": "not-run",
+      "evidence": [],
+      "reason": "The requested 24-hour soak was explicitly paused; interrupted samples do not count."
+    },
+    "G5": {
+      "status": "not-run",
+      "evidence": [],
+      "reason": "No external fieldbus slaves or protocol test fixtures were connected."
+    },
+    "G6": {
+      "status": "not-run",
+      "evidence": [],
+      "reason": "The development image does not implement the production security baseline."
+    },
+    "G7": {
+      "status": "not-run",
+      "evidence": [],
+      "reason": "RK3568 and T536 Enhanced runtime tests have not been run on target boards."
+    }
+  }
+}

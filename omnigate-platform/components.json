@@ -1,0 +1,72 @@
+{
+  "schema_version": 2,
+  "product": "OmniGate Industrial Desktop",
+  "version": "0.1.0-dev",
+  "profiles": ["lite", "enhanced"],
+  "components": [
+    {
+      "id": "omnigate-core",
+      "kind": "platform-service",
+      "path": "overlay/buildroot/buildroot-202205/package/omnigate-core",
+      "version": "0.1.0",
+      "license": "GPL-3.0-only",
+      "profiles": ["lite", "enhanced"]
+    },
+    {
+      "id": "omnigate-web",
+      "kind": "management-ui",
+      "path": "overlay/device/config/chips/t153/configs/omnigate/buildroot/overlay/usr/lib/omnigate-web",
+      "version": "0.1.0-dev",
+      "license": "GPL-3.0-only",
+      "profiles": ["lite", "enhanced"]
+    },
+    {
+      "id": "omnigate-hmi",
+      "kind": "local-desktop-shell",
+      "path": "overlay/buildroot/buildroot-202205/package/omnigate-hmi",
+      "version": "1.0.0",
+      "license": "GPL-3.0-only",
+      "profiles": ["lite", "enhanced"]
+    },
+    {
+      "id": "omnigate-supervisor",
+      "kind": "service-supervisor",
+      "path": "overlay/device/config/chips/t153/configs/omnigate/buildroot/overlay/usr/lib/omnigate-supervisor",
+      "version": "0.1.0-dev",
+      "license": "GPL-3.0-only",
+      "profiles": ["lite", "enhanced"]
+    },
+    {
+      "id": "omnigate-ethercat",
+      "kind": "fieldbus-adapter",
+      "path": "overlay/buildroot/buildroot-202205/package/omnigate-ethercat",
+      "version": "1.0.0",
+      "license": "GPL-3.0-only",
+      "profiles": ["lite", "enhanced"]
+    },
+    {
+      "id": "node-red-profile",
+      "kind": "optional-edge-application",
+      "path": "omnigate-platform/apps/node-red",
+      "version": "4.1.7-profile1",
+      "license": "GPL-3.0-only",
+      "profiles": ["enhanced"]
+    },
+    {
+      "id": "t153-board-support",
+      "kind": "board-support",
+      "path": "overlay/device/config/chips/t153/configs/omnigate",
+      "version": "1.0.0-dev",
+      "license": "mixed-vendor-and-open-source",
+      "profiles": ["lite"]
+    },
+    {
+      "id": "platform-contracts",
+      "kind": "sdk-contract",
+      "path": "omnigate-platform/contracts",
+      "version": "1.0.0",
+      "license": "GPL-3.0-only",
+      "profiles": ["lite", "enhanced"]
+    }
+  ]
+}

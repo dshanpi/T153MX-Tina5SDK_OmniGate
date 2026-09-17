@@ -1,0 +1,19 @@
+{
+  "$schema": "../schemas/board-descriptor.schema.json",
+  "schema_version": 1,
+  "id": "omnigate-t153mx-v1",
+  "vendor": "DshanPI",
+  "soc": "allwinner-t153",
+  "architecture": "armv7-a",
+  "build_system": "tina-buildroot",
+  "supported_profiles": ["lite"],
+  "runtime_manifest": "overlay/device/config/chips/t153/configs/omnigate/buildroot/overlay/etc/omnigate/platform.json",
+  "board_support_component": "t153-board-support",
+  "display": {"width": 1024, "height": 768, "framebuffer": "/dev/fb0"},
+  "validation_status": "development-board-tested",
+  "limitations": [
+    "external-fieldbus-interoperability-not-tested",
+    "24-hour-soak-not-completed",
+    "production-security-baseline-not-complete"
+  ]
+}

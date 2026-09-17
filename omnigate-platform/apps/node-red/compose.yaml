@@ -1,0 +1,41 @@
+services:
+  node-red:
+    image: nodered/node-red:4.1.7
+    restart: unless-stopped
+    user: "1000:1000"
+    ports:
+      - "127.0.0.1:1880:1880"
+    environment:
+      NODE_RED_CREDENTIAL_SECRET_FILE: /run/secrets/node_red_credential_secret
+      NODE_RED_ADMIN_PASSWORD_HASH: ${NODE_RED_ADMIN_PASSWORD_HASH:?required}
+      OMNIGATE_MQTT_HOST: omnigate-mqtt
+    secrets:
+      - node_red_credential_secret
+    volumes:
+      - node-red-data:/data
+      - ./settings.js:/opt/omnigate-defaults/settings.js:ro
+      - ./flows.json:/opt/omnigate-defaults/flows.json:ro
+      - ./init-data.sh:/usr/local/bin/omnigate-node-red-init:ro
+    entrypoint: ["/bin/sh", "/usr/local/bin/omnigate-node-red-init"]
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 384m
+    cpus: 1.5
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:1880/flows/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  node-red-data:
+
+secrets:
+  node_red_credential_secret:
+    file: ${NODE_RED_CREDENTIAL_SECRET_FILE:?required}

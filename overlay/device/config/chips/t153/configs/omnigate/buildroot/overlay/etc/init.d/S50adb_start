@@ -13,7 +13,8 @@ otg_role_file="/sys/devices/platform/soc/usbc0/otg_role"
 usb_device_file="/sys/devices/platform/soc/usbc0/usb_device"
 hardware_type=`cat /proc/cmdline | tr ' ' '\n' | grep 'hardware' | awk -F "=" '{print $2}'`
 
-function enable_udc(){
+enable_udc()
+{
 	while [ 1 ];do
 		udc=`ls /sys/class/udc 2>/dev/null`
 		isudc=`cat $udc_config 2>/dev/null`
@@ -28,7 +29,32 @@ function enable_udc(){
 	done
 }
 
-function start_adb(){
+unbind_udc()
+{
+	if [ -f "$udc_config" ] && [ -n "`cat "$udc_config" 2>/dev/null`" ]; then
+		echo "" > "$udc_config"
+	fi
+}
+
+stop_adb()
+{
+	unbind_udc
+	killall adbd 2>/dev/null
+	# A stale FunctionFS mount keeps the old descriptors and commonly leaves
+	# the Windows transport in offline state after an adbd restart.
+	if mount | grep -q 'on /dev/usb-ffs/adb type functionfs'; then
+		tries=0
+		while ! umount /dev/usb-ffs/adb 2>/dev/null; do
+			tries=$((tries + 1))
+			[ "$tries" -ge 10 ] && return 1
+			busybox usleep 100000
+		done
+	fi
+	return 0
+}
+
+start_adb()
+{
 	serialnumber=$1
 	if [ "x$serialnumber" = "x" ];then
 		serialnumber="0402101560"
@@ -43,11 +69,17 @@ function start_adb(){
 
 	# config ptmx
 	mkdir -p /dev/pts
-	mount -t devpts none /dev/pts
+	mount | grep -q 'on /dev/pts type devpts' || mount -t devpts none /dev/pts
 
 	# config adb function
 	mount -t configfs none /sys/kernel/config > /dev/null 2>&1
 	mkdir -p /sys/kernel/config/usb_gadget/g1
+	# The vendor UDC may already be bound before adbd has published its
+	# FunctionFS descriptors. Windows then keeps an enumerated transport in
+	# "offline" state. Always configure FunctionFS while the UDC is detached.
+	if [ -f "$udc_config" ] && [ -n "`cat "$udc_config" 2>/dev/null`" ]; then
+		echo "" > "$udc_config"
+	fi
 	echo "0x18d1" > /sys/kernel/config/usb_gadget/g1/idVendor
 	echo "0x4ee7" > /sys/kernel/config/usb_gadget/g1/idProduct
 	mkdir -p /sys/kernel/config/usb_gadget/g1/strings/0x409
@@ -62,15 +94,41 @@ function start_adb(){
 	ln -s /sys/kernel/config/usb_gadget/g1/functions/ffs.adb/ /sys/kernel/config/usb_gadget/g1/configs/c.1/ffs.adb > /dev/null 2>&1
 	mkdir -p /dev/usb-ffs
 	mkdir -p /dev/usb-ffs/adb
-	if [ "x`ls -A /dev/usb-ffs/adb`" = "x" ];then
-		mount -o uid=2000,gid=2000 -t functionfs adb /dev/usb-ffs/adb/
+	if ! mount | grep -q 'on /dev/usb-ffs/adb type functionfs'; then
+		mount -o uid=2000,gid=2000 -t functionfs adb /dev/usb-ffs/adb/ || {
+			echo "FAIL (FunctionFS mount)"
+			return 1
+		}
 	fi
 
 	# start adbd daemon
 	adbd &
-	[ $? -eq 0 ] && echo "OK" || "FAIL"
+	tries=0
+	while [ -z "`pidof adbd`" ]; do
+		tries=$((tries + 1))
+		[ "$tries" -ge 20 ] && break
+		busybox usleep 100000
+	done
+	adb_pid=`pidof adbd`
+	if [ -z "$adb_pid" ]; then
+		echo "FAIL (adbd exited)"
+		return 1
+	fi
+	sleep 1
 
-	# enable_udc &
+	# Let adbd open ep0 and publish descriptors before presenting the gadget
+	# to the host. This ordering is required for reliable Windows enumeration.
+	sleep 1
+	udc=`ls /sys/class/udc 2>/dev/null | head -n 1`
+	if [ -n "$udc" ] && [ -z "`cat "$udc_config" 2>/dev/null`" ]; then
+		echo "$udc" > "$udc_config"
+	fi
+	if [ -z "$udc" ] || [ "`cat "$udc_config" 2>/dev/null`" != "$udc" ]; then
+		echo "FAIL (UDC bind)"
+		kill "$adb_pid" 2>/dev/null
+		return 1
+	fi
+	echo "OK"
 }
 
 case "$1" in
@@ -100,10 +158,8 @@ case "$1" in
 		;;
 	stop)
 		printf "Stopping adbd "
-		# touch $disable_udc
-		# sleep 2
-		killall adbd &
-		[ $? -eq 0 ] && echo "OK" || "FAIL"
+		stop_adb
+		[ $? -eq 0 ] && echo "OK" || echo "FAIL"
 		;;
 	restart|reload)
 		"$0" stop

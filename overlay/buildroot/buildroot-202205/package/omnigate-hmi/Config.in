@@ -1,0 +1,10 @@
+config BR2_PACKAGE_OMNIGATE_HMI
+	bool "omnigate-hmi"
+	depends on BR2_PACKAGE_QT5
+	select BR2_PACKAGE_QT5BASE_GUI
+	select BR2_PACKAGE_QT5BASE_WIDGETS
+	select BR2_PACKAGE_QT5BASE_NETWORK
+	select BR2_PACKAGE_QT5CHARTS
+	select BR2_PACKAGE_OMNIGATE_CORE
+	help
+	  Full-screen Qt5 industrial HMI for the T153MX OmniGate board.

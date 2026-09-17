@@ -37,6 +37,7 @@ check_config()
 }
 
 check_file buildroot/buildroot-202205/package/soem/soem.mk
+check_file buildroot/buildroot-202205/package/omnigate-core/omnigate-core.mk
 check_file buildroot/buildroot-202205/package/omnigate-ethercat/omnigate-ethercat.mk
 check_file buildroot/buildroot-202205/package/thingsboard-gateway/thingsboard-gateway.mk
 check_file buildroot/buildroot-202205/package/python-jsonpath-rw/python-jsonpath-rw.mk
@@ -46,6 +47,8 @@ check_exec device/config/chips/t153/configs/omnigate/buildroot/overlay/usr/bin/o
 check_exec device/config/chips/t153/configs/omnigate/buildroot/overlay/etc/init.d/S46omnigate-wifi
 check_file device/config/chips/t153/configs/omnigate/buildroot/overlay/etc/thingsboard-gateway/config/tb_gateway.json
 check_exec device/config/chips/t153/configs/omnigate/buildroot/overlay/etc/init.d/S71omnigate-web
+check_exec device/config/chips/t153/configs/omnigate/buildroot/overlay/etc/init.d/S72omnigate-supervisor
+check_file device/config/chips/t153/configs/omnigate/buildroot/overlay/etc/omnigate/platform.json
 check_file device/config/chips/t153/configs/omnigate/buildroot/overlay/etc/omnigate-web/config.json
 check_file device/config/chips/t153/configs/omnigate/buildroot/overlay/usr/lib/omnigate-web/app.py
 check_file device/config/chips/t153/configs/omnigate/buildroot/overlay/usr/share/omnigate-web/index.html
@@ -54,6 +57,7 @@ BR_CONFIG=out/t153/omnigate/buildroot/buildroot/.config
 K_CONFIG=out/t153/kernel/build/.config
 if [ -f "$SDK/$BR_CONFIG" ]; then
 	check_config "$BR_CONFIG" BR2_PACKAGE_SOEM
+	check_config "$BR_CONFIG" BR2_PACKAGE_OMNIGATE_CORE
 	check_config "$BR_CONFIG" BR2_PACKAGE_OMNIGATE_ETHERCAT
 	check_config "$BR_CONFIG" BR2_PACKAGE_THINGSBOARD_GATEWAY
 	check_config "$BR_CONFIG" BR2_PACKAGE_NTP
@@ -65,6 +69,7 @@ if [ -f "$SDK/$BR_CONFIG" ]; then
 	check_config "$BR_CONFIG" BR2_PACKAGE_LIBQMI
 	check_config "$BR_CONFIG" BR2_PACKAGE_LIBMBIM
 	check_config "$BR_CONFIG" BR2_PACKAGE_PPPD
+	check_config "$BR_CONFIG" BR2_PACKAGE_FBGRAB
 else
 	printf 'SKIP %s (尚未完成 Buildroot 配置/编译)\n' "$BR_CONFIG"
 fi
@@ -79,9 +84,11 @@ fi
 
 if [ -d "$SDK/out/t153/omnigate/buildroot/buildroot/target" ]; then
 	check_exec out/t153/omnigate/buildroot/buildroot/target/usr/bin/omnigate-ethercat
+	check_file out/t153/omnigate/buildroot/buildroot/target/usr/lib/omnigate-core/omnigate_core/api.py
 	check_exec out/t153/omnigate/buildroot/buildroot/target/usr/bin/mmcli
 	check_exec out/t153/omnigate/buildroot/buildroot/target/usr/bin/qmicli
 	check_exec out/t153/omnigate/buildroot/buildroot/target/usr/sbin/ModemManager
+	check_exec out/t153/omnigate/buildroot/buildroot/target/usr/bin/fbgrab
 fi
 
 if [ "$FAILED" -ne 0 ]; then

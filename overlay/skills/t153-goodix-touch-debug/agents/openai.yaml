@@ -1,0 +1,4 @@
+interface:
+  display_name: "T153 Goodix Touch Debug"
+  short_description: "Trace GT911 DTS, probe, events, and touch"
+  default_prompt: "Use $t153-goodix-touch-debug to diagnose this T153MX touch failure and state the highest verified evidence level."

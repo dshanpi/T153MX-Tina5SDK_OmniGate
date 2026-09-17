@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "policy_id": "omnigate-system-release-gates-v1",
+  "verdicts": [
+    "passed",
+    "passed-with-limitations",
+    "failed",
+    "not-run",
+    "not-applicable"
+  ],
+  "release_classes": {
+    "development": {
+      "required_gates": ["G0", "G1", "G2", "G3"],
+      "limitations_allowed_at": ["G3"]
+    },
+    "release-candidate": {
+      "required_gates": ["G0", "G1", "G2", "G3", "G4"],
+      "limitations_allowed_at": []
+    },
+    "production": {
+      "required_gates": ["G0", "G1", "G2", "G3", "G4", "G5", "G6"],
+      "limitations_allowed_at": []
+    }
+  },
+  "conditional_gates": {
+    "fieldbus_interoperability_claim": "G5",
+    "enhanced_profile": "G7"
+  },
+  "gates": [
+    {
+      "id": "G0",
+      "name": "source-and-contract-integrity",
+      "scope": "Source, schemas, package boundaries and host-side behavior",
+      "required_evidence": ["host-test-log", "schema-validation", "overlay-verification"],
+      "pass_criteria": ["all-host-tests-pass", "all-machine-readable-files-parse", "overlay-matches-target-sdk"]
+    },
+    {
+      "id": "G1",
+      "name": "reproducible-image",
+      "scope": "Clean build, image identity and package identity",
+      "required_evidence": ["build-log", "image-manifest", "package-manifest"],
+      "pass_criteria": ["clean-targeted-rebuild-passes", "image-sha256-recorded", "partition-layout-recorded", "release-artifacts-have-sha256"]
+    },
+    {
+      "id": "G2",
+      "name": "deployment-and-cold-boot",
+      "scope": "Image transfer, flash verification and deterministic boot",
+      "required_evidence": ["flash-task-final-record", "serial-cold-boot-log"],
+      "pass_criteria": ["transferred-image-sha256-matches", "written-data-verification-passes", "linux-ready-within-120-seconds", "flash-mode-is-reported-exactly"]
+    },
+    {
+      "id": "G3",
+      "name": "lite-functional-and-safety",
+      "scope": "Lite API, persistence, HMI, recovery and safe peripheral behavior",
+      "required_evidence": ["api-test-log", "board-functional-capture", "framebuffer-capture", "kernel-log-review"],
+      "pass_criteria": ["authentication-authorization-csrf-audit-pass", "sqlite-integrity-ok", "bounded-service-recovery", "no-panic-oops-oom", "display-and-declared-input-evidence-match", "unloaded-fieldbuses-send-no-control-traffic"]
+    },
+    {
+      "id": "G4",
+      "name": "long-duration-stability",
+      "scope": "24-hour soak, resource growth and controlled recovery",
+      "required_evidence": ["timestamped-soak-samples", "fault-injection-events", "soak-final-report"],
+      "pass_criteria": ["duration-at-least-24-hours", "service-health-at-least-99.5-percent", "no-unplanned-reboot", "no-kernel-anomaly", "rss-growth-at-most-20-percent", "log-and-database-growth-at-most-50-mib"]
+    },
+    {
+      "id": "G5",
+      "name": "fieldbus-interoperability",
+      "scope": "CANopen, Modbus RTU and EtherCAT claims made for the release",
+      "required_evidence": ["named-test-fixture", "protocol-transcript", "safe-command-authorization"],
+      "pass_criteria": ["real-external-peer-used", "claimed-read-write-paths-pass", "failure-and-recovery-observed", "no-claim-derived-from-enumeration-only"]
+    },
+    {
+      "id": "G6",
+      "name": "production-security-and-update",
+      "scope": "Production identity, access, secure boot and recoverable updates",
+      "required_evidence": ["threat-model", "security-test-report", "signed-update-and-rollback-report"],
+      "pass_criteria": ["unique-device-identity", "forced-credential-change", "debug-entry-points-disabled", "default-deny-firewall", "secure-boot-enforced", "signed-ota-enforced", "automatic-rollback-proven"]
+    },
+    {
+      "id": "G7",
+      "name": "enhanced-runtime-isolation",
+      "scope": "Enhanced OCI/Node-RED runtime on each claimed board",
+      "required_evidence": ["board-load-report", "container-policy-capture", "power-loss-recovery-report"],
+      "pass_criteria": ["cpu-memory-pid-limits-enforced", "no-direct-hardware-device-mapping", "capabilities-dropped", "flow-persistence-proven", "power-loss-recovery-proven"]
+    }
+  ]
+}

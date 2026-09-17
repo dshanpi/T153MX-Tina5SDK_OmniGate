@@ -2,15 +2,22 @@
 
 start_interfaces()
 {
+	PYTHONPATH=/usr/lib/omnigate-core
+	CAN_INTERFACES=$(PYTHONPATH="$PYTHONPATH" python3 -m omnigate_core.platform kind can 2>/dev/null)
+	ETHERCAT_INTERFACE=$(PYTHONPATH="$PYTHONPATH" python3 -m omnigate_core.platform role ethercat 2>/dev/null | head -n 1)
+	[ -n "$CAN_INTERFACES" ] || CAN_INTERFACES="can0 can1"
+	[ -n "$ETHERCAT_INTERFACE" ] || ETHERCAT_INTERFACE=eth0
+
 	# CAN-FD bitrates are deployment-specific. Keep both controllers down
 	# until configured, but make stale settings deterministic.
-	ip link set can0 down 2>/dev/null || true
-	ip link set can1 down 2>/dev/null || true
+	for interface in $CAN_INTERFACES; do
+		ip link set "$interface" down 2>/dev/null || true
+	done
 
 	# eth0 is reserved for SOEM EtherCAT. It needs raw Ethernet link only,
 	# not an IP address or DHCP client.
-	ip addr flush dev eth0 2>/dev/null || true
-	ip link set eth0 up 2>/dev/null || true
+	ip addr flush dev "$ETHERCAT_INTERFACE" 2>/dev/null || true
+	ip link set "$ETHERCAT_INTERFACE" up 2>/dev/null || true
 }
 
 case "$1" in
@@ -18,8 +25,12 @@ case "$1" in
 		start_interfaces
 		;;
 	stop)
-		ip link set can0 down 2>/dev/null || true
-		ip link set can1 down 2>/dev/null || true
+		PYTHONPATH=/usr/lib/omnigate-core
+		CAN_INTERFACES=$(PYTHONPATH="$PYTHONPATH" python3 -m omnigate_core.platform kind can 2>/dev/null)
+		[ -n "$CAN_INTERFACES" ] || CAN_INTERFACES="can0 can1"
+		for interface in $CAN_INTERFACES; do
+			ip link set "$interface" down 2>/dev/null || true
+		done
 		;;
 	*)
 		echo "Usage: $0 {start|stop|restart}"

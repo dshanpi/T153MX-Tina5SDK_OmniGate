@@ -1,0 +1,19 @@
+#!/bin/sh
+
+app_name=powerkey_suspend
+app_path=/usr/bin/$app_name
+
+[ -x "$app_path" ] || exit 0
+
+case "$1" in
+	start)
+		"$app_path" &
+		;;
+	stop)
+		killall "$app_name" 2>/dev/null || true
+		;;
+	*)
+		echo "Usage: $0 {start|stop}"
+		exit 1
+		;;
+esac

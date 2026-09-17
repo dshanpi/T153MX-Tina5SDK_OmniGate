@@ -1,0 +1,41 @@
+#!/bin/sh
+
+NAME=omnigate-supervisor
+PIDFILE=/var/run/$NAME.pid
+DAEMON=/usr/bin/python3
+APP=/usr/lib/omnigate-supervisor/supervisor.py
+
+[ -r /etc/default/omnigate-supervisor ] && . /etc/default/omnigate-supervisor
+ENABLED=${ENABLED:-1}
+
+start()
+{
+	[ "$ENABLED" = "1" ] || return 0
+	if [ -s "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
+		return 0
+	fi
+	mkdir -p /var/run
+	HEALTH_URL="${HEALTH_URL:-http://127.0.0.1/api/health}" \
+	CHECK_INTERVAL="${CHECK_INTERVAL:-10}" \
+	FAILURE_THRESHOLD="${FAILURE_THRESHOLD:-3}" \
+	RESTART_COOLDOWN="${RESTART_COOLDOWN:-120}" \
+	WATCHDOG_ENABLE="${WATCHDOG_ENABLE:-0}" \
+	WATCHDOG_DEVICE="${WATCHDOG_DEVICE:-/dev/watchdog}" \
+		start-stop-daemon -S -b -m -p "$PIDFILE" -x "$DAEMON" -- "$APP"
+}
+
+stop()
+{
+	start-stop-daemon -K -p "$PIDFILE" -R 5 2>/dev/null || true
+	rm -f "$PIDFILE"
+}
+
+case "$1" in
+	start) start ;;
+	stop) stop ;;
+	restart) stop; start ;;
+	status)
+		[ -s "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null
+		;;
+	*) echo "Usage: $0 {start|stop|restart|status}"; exit 1 ;;
+esac

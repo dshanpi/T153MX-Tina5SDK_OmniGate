@@ -1,0 +1,133 @@
+#!/usr/bin/env python3
+"""Emit one machine-readable acceptance sample without changing board state."""
+import glob
+import json
+import os
+import subprocess
+import time
+
+
+def read(path, default=""):
+    try:
+        with open(path, "r", encoding="utf-8", errors="replace") as stream:
+            return stream.read()
+    except OSError:
+        return default
+
+
+def proc_values():
+    result = {}
+    wanted = {"web": ("omnigate-web/app.py",),
+              "hmi": ("omnigate-hmi", "omnigate-hmi-launcher")}
+    for name, needles in wanted.items():
+        matches = []
+        for path in glob.glob("/proc/[0-9]*/cmdline"):
+            command = read(path).replace("\0", " ")
+            if not any(needle in command for needle in needles):
+                continue
+            pid = int(path.split("/")[2])
+            status = read("/proc/%d/status" % pid)
+            rss_kib = 0
+            for line in status.splitlines():
+                if line.startswith("VmRSS:"):
+                    rss_kib = int(line.split()[1])
+                    break
+            try:
+                fd_count = len(os.listdir("/proc/%d/fd" % pid))
+            except OSError:
+                fd_count = -1
+            matches.append({"pid": pid, "rss_kib": rss_kib,
+                            "fd_count": fd_count, "command": command[:256]})
+        result[name] = matches
+    return result
+
+
+def service_state(pidfile=None, process=None):
+    if pidfile:
+        try:
+            pid = int(read(pidfile).strip())
+            os.kill(pid, 0)
+            return {"running": True, "pid": pid}
+        except (OSError, ValueError):
+            return {"running": False}
+    try:
+        output = subprocess.check_output(["pidof", process], text=True,
+                                         stderr=subprocess.DEVNULL).strip()
+        return {"running": bool(output), "pids": output}
+    except (OSError, subprocess.CalledProcessError):
+        return {"running": False}
+
+
+def main():
+    stat = read("/proc/stat").splitlines()[0].split()[1:]
+    ticks = [int(value) for value in stat]
+    memory = {}
+    for line in read("/proc/meminfo").splitlines():
+        key, value = line.split(":", 1)
+        if key in ("MemTotal", "MemAvailable", "MemFree", "Buffers", "Cached"):
+            memory[key.lower() + "_kib"] = int(value.split()[0])
+    temperatures = []
+    for path in glob.glob("/sys/class/thermal/thermal_zone*/temp"):
+        try:
+            temperatures.append({"zone": path.split("/")[-2],
+                                 "millidegree_c": int(read(path).strip())})
+        except ValueError:
+            pass
+    storage = {}
+    for mount in ("/", "/var/lib/omnigate"):
+        try:
+            values = os.statvfs(mount)
+            storage[mount] = {"total_bytes": values.f_blocks * values.f_frsize,
+                              "available_bytes": values.f_bavail * values.f_frsize}
+        except OSError:
+            pass
+    databases = {}
+    for pattern in ("/var/lib/omnigate/*.db", "/var/lib/omnigate/*.sqlite*"):
+        for path in glob.glob(pattern):
+            try:
+                databases[path] = os.path.getsize(path)
+            except OSError:
+                pass
+    logs = {}
+    for pattern in ("/var/log/*.log", "/var/log/messages*"):
+        for path in glob.glob(pattern):
+            try:
+                logs[path] = os.path.getsize(path)
+            except OSError:
+                pass
+    try:
+        kernel = subprocess.check_output(["dmesg"], text=True,
+                                         errors="replace", timeout=5)
+    except (OSError, subprocess.SubprocessError):
+        kernel = ""
+    bad_words = ("panic", "oops", "out of memory", "oom-killer",
+                 "read-only file system", "i/o error", "sqlite_corrupt",
+                 "critical temperature", "thermal thrott")
+    anomalies = [line[-1000:] for line in kernel.splitlines()
+                 if any(word in line.lower() for word in bad_words)]
+    value = {
+        "timestamp": int(time.time()),
+        "uptime_seconds": float(read("/proc/uptime", "0").split()[0]),
+        "cpu": {"ticks": ticks, "total": sum(ticks),
+                "idle": ticks[3] + (ticks[4] if len(ticks) > 4 else 0)},
+        "loadavg": read("/proc/loadavg").strip(),
+        "memory": memory,
+        "temperatures": temperatures,
+        "storage": storage,
+        "processes": proc_values(),
+        "database_bytes": databases,
+        "log_bytes": logs,
+        "services": {
+            "web": service_state("/var/run/omnigate-web.pid"),
+            "hmi": service_state("/var/run/omnigate-hmi.pid"),
+            "supervisor": service_state("/var/run/omnigate-supervisor.pid"),
+            "modem_manager": service_state(process="ModemManager"),
+        },
+        "supervisor": json.loads(read("/var/run/omnigate-supervisor.json", "{}")),
+        "kernel_anomalies": anomalies,
+    }
+    print(json.dumps(value, sort_keys=True, separators=(",", ":")))
+
+
+if __name__ == "__main__":
+    main()

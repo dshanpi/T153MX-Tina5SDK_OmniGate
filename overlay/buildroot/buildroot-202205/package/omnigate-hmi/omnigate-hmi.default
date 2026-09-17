@@ -1,0 +1,2 @@
+ENABLED=1
+QT_PLATFORM="linuxfb:fb=/dev/fb0"

@@ -1,0 +1,15 @@
+config BR2_PACKAGE_OMNIGATE_CORE
+	bool "omnigate-core"
+	depends on BR2_USE_WCHAR
+	depends on BR2_USE_MMU
+	depends on BR2_TOOLCHAIN_HAS_THREADS
+	depends on !BR2_STATIC_LIBS
+	select BR2_PACKAGE_PYTHON3
+	select BR2_PACKAGE_PYTHON3_SQLITE
+	select BR2_PACKAGE_PYTHON_FLASK
+	help
+	  Portable board manifest, industrial asset model, and versioned REST API
+	  shared by OmniGate Lite and Enhanced gateway products.
+
+comment "omnigate-core needs a toolchain w/ wchar, threads, dynamic library"
+	depends on !BR2_USE_WCHAR || !BR2_TOOLCHAIN_HAS_THREADS || BR2_STATIC_LIBS

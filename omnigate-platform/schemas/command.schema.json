@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://omnigate.local/schemas/command.schema.json",
+  "title": "OmniGate controlled command",
+  "type": "object",
+  "required": ["schema_version", "command_id", "device_id", "action", "issued_at", "expires_at", "parameters"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "command_id": {"type": "string", "minLength": 8, "maxLength": 128},
+    "device_id": {"type": "string", "minLength": 1, "maxLength": 128},
+    "action": {"type": "string", "pattern": "^[a-z][a-z0-9._-]+$"},
+    "issued_at": {"type": "string", "format": "date-time"},
+    "expires_at": {"type": "string", "format": "date-time"},
+    "actor": {"type": "string", "maxLength": 128},
+    "parameters": {"type": "object"},
+    "dry_run": {"type": "boolean", "default": false}
+  },
+  "additionalProperties": false
+}

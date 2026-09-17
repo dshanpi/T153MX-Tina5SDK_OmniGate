@@ -1,3 +1,6 @@
 ENABLED=1
 LISTEN_ADDRESS=0.0.0.0
 LISTEN_PORT=80
+# Provision both paths and change LISTEN_PORT to 443 for production HTTPS.
+TLS_CERT=
+TLS_KEY=

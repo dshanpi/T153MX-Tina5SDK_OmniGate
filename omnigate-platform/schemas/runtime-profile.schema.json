@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://omnigate.local/schemas/runtime-profile.schema.json",
+  "title": "OmniGate runtime profile",
+  "type": "object",
+  "required": ["schema_version", "id", "components", "services", "containers", "node_red", "persistence"],
+  "properties": {
+    "$schema": {"type": "string"},
+    "schema_version": {"const": 1},
+    "id": {"enum": ["lite", "enhanced"]},
+    "display_name": {"type": "string", "minLength": 1},
+    "target_class": {"type": "string", "minLength": 1},
+    "components": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+    "services": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "optional_features": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "containers": {"type": "boolean"},
+    "node_red": {"type": "boolean"},
+    "persistence": {
+      "type": "object",
+      "required": ["data_root", "database", "atomic_configuration_writes"],
+      "properties": {
+        "data_root": {"type": "string", "pattern": "^/"},
+        "database": {"type": "string", "minLength": 1},
+        "atomic_configuration_writes": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    },
+    "container_policy": {"type": "object"}
+  },
+  "additionalProperties": false
+}

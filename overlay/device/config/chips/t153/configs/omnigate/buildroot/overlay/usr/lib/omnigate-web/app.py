@@ -12,20 +12,32 @@ import subprocess
 import tempfile
 import threading
 import time
+import sys
 from pathlib import Path
 
 from flask import Flask, jsonify, request, send_from_directory, session
+from werkzeug.exceptions import HTTPException
 from werkzeug.utils import secure_filename
 
-APP_DIR = Path("/usr/share/omnigate-web")
-CONFIG_FILE = Path("/etc/omnigate-web/config.json")
-TB_CONFIG = Path("/etc/thingsboard-gateway/config/tb_gateway.json")
-MODBUS_CONFIG = Path("/etc/thingsboard-gateway/config/modbus.json")
-EDS_DIR = Path("/var/lib/omnigate/eds")
-SECRET_FILE = Path("/etc/omnigate-web/secret.key")
-LOG_FILE = Path("/var/log/omnigate-web.log")
+sys.path.insert(0, os.environ.get("OMNIGATE_CORE_PATH", "/usr/lib/omnigate-core"))
+from omnigate_core.platform import load_manifest
+
+APP_DIR = Path(os.environ.get("OMNIGATE_WEB_ASSETS", "/usr/share/omnigate-web"))
+CONFIG_FILE = Path(os.environ.get(
+    "OMNIGATE_WEB_CONFIG", "/etc/omnigate-web/config.json"))
+TB_CONFIG = Path(os.environ.get(
+    "OMNIGATE_TB_CONFIG", "/etc/thingsboard-gateway/config/tb_gateway.json"))
+MODBUS_CONFIG = Path(os.environ.get(
+    "OMNIGATE_MODBUS_CONFIG", "/etc/thingsboard-gateway/config/modbus.json"))
+EDS_DIR = Path(os.environ.get("OMNIGATE_EDS_DIR", "/var/lib/omnigate/eds"))
+SECRET_FILE = Path(os.environ.get(
+    "OMNIGATE_WEB_SECRET", "/etc/omnigate-web/secret.key"))
+LOG_FILE = Path(os.environ.get("OMNIGATE_WEB_LOG", "/var/log/omnigate-web.log"))
 MAX_OUTPUT = 32768
 LOCK = threading.RLock()
+LOGIN_LOCK = threading.Lock()
+LOGIN_FAILURES = {}
+PLATFORM = load_manifest()
 
 logging.basicConfig(
     filename=str(LOG_FILE),
@@ -34,9 +46,41 @@ logging.basicConfig(
 )
 
 app = Flask(__name__, static_folder=None)
+
+
+def load_or_create_session_secret():
+    """Return a persistent per-device Flask signing key without logging it."""
+    try:
+        value = SECRET_FILE.read_text(encoding="ascii").strip()
+        if len(value) >= 64:
+            return value
+    except OSError:
+        pass
+
+    SECRET_FILE.parent.mkdir(parents=True, exist_ok=True)
+    value = secrets.token_hex(32)
+    fd, temporary = tempfile.mkstemp(
+        prefix=SECRET_FILE.name + ".", dir=str(SECRET_FILE.parent)
+    )
+    try:
+        with os.fdopen(fd, "w", encoding="ascii") as stream:
+            stream.write(value + "\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.chmod(temporary, 0o600)
+        os.replace(temporary, SECRET_FILE)
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
+    return value
+
+
+app.secret_key = load_or_create_session_secret()
 app.config["MAX_CONTENT_LENGTH"] = 2 * 1024 * 1024
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Strict"
+app.config["SESSION_COOKIE_SECURE"] = os.environ.get("OMNIGATE_HTTPS", "0") == "1"
+app.config["PERMANENT_SESSION_LIFETIME"] = 1800
 
 
 def atomic_json(path, data, mode=0o600):
@@ -104,30 +148,39 @@ def parse_int(value, name, minimum, maximum):
 
 
 def valid_interface(value, can_only=False):
-    pattern = r"can[01]" if can_only else r"(?:can[01]|eth[01]|wwan[0-9]+)"
-    if not isinstance(value, str) or not re.fullmatch(pattern, value):
+    kinds = {"can"} if can_only else {"can", "ethernet", "cellular", "wifi"}
+    allowed = {item["device"] for item in PLATFORM["channels"].values()
+               if item["kind"] in kinds and not item["device"].startswith("/dev/")}
+    if not isinstance(value, str) or value not in allowed:
         raise ValueError("非法网络接口")
     return value
 
 
-def init_secret():
-    SECRET_FILE.parent.mkdir(parents=True, exist_ok=True)
-    if not SECRET_FILE.exists():
-        SECRET_FILE.write_text(secrets.token_hex(32), encoding="ascii")
-        os.chmod(SECRET_FILE, 0o600)
-    app.secret_key = SECRET_FILE.read_text(encoding="ascii").strip()
+def devices_by_kind(kind):
+    return [item["device"] for item in PLATFORM["channels"].values()
+            if item["kind"] == kind]
 
 
-init_secret()
+def device_by_role(role):
+    for item in PLATFORM["channels"].values():
+        if item.get("role") == role:
+            return item["device"]
+    raise RuntimeError("板型未定义接口角色: " + role)
 
 
 @app.before_request
 def require_login():
+    if request.path.startswith("/api/hmi/v1/"):
+        if request.remote_addr in ("127.0.0.1", "::1"):
+            return None
+        return jsonify(error="HMI API仅允许本机访问"), 403
     public = {"/", "/api/login", "/api/health"}
     if request.path.startswith("/assets/") or request.path in public:
         return None
     if not session.get("authenticated"):
         return jsonify(error="请先登录"), 401
+    if request.method not in ("GET", "HEAD", "OPTIONS") and session.get("role") == "viewer":
+        return jsonify(error="当前角色只有只读权限"), 403
     if request.method not in ("GET", "HEAD", "OPTIONS"):
         expected = session.get("csrf")
         if not expected or not hmac.compare_digest(
@@ -137,11 +190,36 @@ def require_login():
     return None
 
 
+@app.after_request
+def secure_response(response):
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "no-referrer"
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; style-src 'self' 'unsafe-inline'; "
+        "script-src 'self' 'unsafe-inline'; img-src 'self' data:; "
+        "connect-src 'self'; frame-ancestors 'none'; base-uri 'self'"
+    )
+    if request.path.startswith("/api/"):
+        response.headers["Cache-Control"] = "no-store"
+    return response
+
+
 @app.errorhandler(Exception)
 def handle_error(exc):
-    app.logger.exception("request failed")
-    code = 400 if isinstance(exc, (ValueError, RuntimeError)) else 500
-    return jsonify(error=str(exc) or exc.__class__.__name__), code
+    if isinstance(exc, HTTPException):
+        code = exc.code or 500
+        message = exc.description
+        app.logger.warning("request rejected: %s", exc)
+    elif isinstance(exc, (ValueError, RuntimeError)):
+        code = 400
+        message = str(exc)
+        app.logger.warning("request rejected: %s", exc)
+    else:
+        code = 500
+        message = "内部服务错误"
+        app.logger.exception("request failed")
+    return jsonify(error=message), code
 
 
 @app.get("/")
@@ -162,16 +240,30 @@ def health():
 @app.post("/api/login")
 def login():
     body = request.get_json(force=True)
+    client = request.remote_addr or "unknown"
+    now = time.monotonic()
+    with LOGIN_LOCK:
+        attempts = [stamp for stamp in LOGIN_FAILURES.get(client, []) if now - stamp < 300]
+        LOGIN_FAILURES[client] = attempts
+    if len(attempts) >= 8:
+        return jsonify(error="登录失败次数过多，请稍后再试"), 429
     cfg = load_config().get("auth", {})
     supplied = password_hash(str(body.get("password", "")), cfg.get("salt", ""))
     if body.get("username") != cfg.get("username") or not hmac.compare_digest(
         supplied, cfg.get("password_hash", "")
     ):
+        with LOGIN_LOCK:
+            LOGIN_FAILURES.setdefault(client, []).append(now)
         time.sleep(0.3)
         return jsonify(error="用户名或密码错误"), 401
     session.clear()
+    session.permanent = True
     session["authenticated"] = True
+    session["username"] = cfg.get("username")
+    session["role"] = cfg.get("role", "administrator")
     session["csrf"] = secrets.token_hex(24)
+    with LOGIN_LOCK:
+        LOGIN_FAILURES.pop(client, None)
     return jsonify(
         ok=True, csrf=session["csrf"], must_change=bool(cfg.get("must_change"))
     )
@@ -187,8 +279,8 @@ def logout():
 def change_password():
     body = request.get_json(force=True)
     new_password = str(body.get("password", ""))
-    if len(new_password) < 8:
-        raise ValueError("新密码至少 8 位")
+    if len(new_password) < 12:
+        raise ValueError("新密码至少 12 位")
     cfg = load_config()
     salt = secrets.token_hex(16)
     cfg["auth"]["salt"] = salt
@@ -287,7 +379,7 @@ def put_rs485():
     slaves = data.setdefault("master", {}).setdefault("slaves", [])
     if not slaves:
         raise ValueError("Modbus 模板中没有从站")
-    port = str(body.get("port", "/dev/ttyAS5"))
+    port = str(body.get("port", device_by_role("modbus-rtu")))
     if not re.fullmatch(r"/dev/tty(?:AS|USB)[0-9]+", port):
         raise ValueError("串口路径不合法")
     slave = slaves[0]
@@ -333,7 +425,7 @@ def get_can():
         config=cfg.get("can", {}),
         state={
             name: command(["ip", "-details", "link", "show", name], timeout=4)["output"]
-            for name in ("can0", "can1")
+            for name in devices_by_kind("can")
         }
     )
 
@@ -646,16 +738,18 @@ def canopen_pdo_transmit():
 
 
 def ethercat_settings(body):
-    iface = body.get("interface", "eth0")
-    if iface != "eth0":
-        raise ValueError("EtherCAT 固定使用 eth0")
+    expected = device_by_role("ethercat")
+    iface = body.get("interface", expected)
+    if iface != expected:
+        raise ValueError("EtherCAT 必须使用板型定义的专用接口")
     return iface
 
 
 def ethercat_command(arguments, timeout=20, require_success=True):
+    iface = device_by_role("ethercat")
     with LOCK:
         result = command(
-            ["/usr/bin/omnigate-ethercat", "eth0", *arguments],
+            ["/usr/bin/omnigate-ethercat", iface, *arguments],
             timeout=timeout
         )
     parsed = None
@@ -869,7 +963,18 @@ def logs(name):
     return jsonify(output=command(["tail", "-n", str(lines), path], timeout=5)["output"])
 
 
+from hmi_api import create_blueprint
+from omnigate_core.api import create_blueprint as create_edge_blueprint
+app.register_blueprint(create_blueprint())
+app.register_blueprint(create_edge_blueprint())
+
+
 if __name__ == "__main__":
     address = os.environ.get("OMNIGATE_LISTEN_ADDRESS", "0.0.0.0")
     port = int(os.environ.get("OMNIGATE_LISTEN_PORT", "80"))
-    app.run(host=address, port=port, threaded=True)
+    cert = os.environ.get("OMNIGATE_TLS_CERT", "")
+    key = os.environ.get("OMNIGATE_TLS_KEY", "")
+    if bool(cert) != bool(key):
+        raise RuntimeError("TLS_CERT and TLS_KEY must be configured together")
+    app.run(host=address, port=port, threaded=True,
+            ssl_context=(cert, key) if cert else None)

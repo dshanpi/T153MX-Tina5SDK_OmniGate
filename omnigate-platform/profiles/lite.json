@@ -1,0 +1,24 @@
+{
+  "$schema": "../schemas/runtime-profile.schema.json",
+  "schema_version": 1,
+  "id": "lite",
+  "display_name": "OmniGate Lite",
+  "target_class": "resource-constrained-native",
+  "components": [
+    "omnigate-core",
+    "omnigate-web",
+    "omnigate-hmi",
+    "omnigate-supervisor",
+    "omnigate-ethercat",
+    "platform-contracts"
+  ],
+  "services": ["omnigate-web", "omnigate-hmi", "omnigate-supervisor"],
+  "optional_features": ["canopen", "modbus-rtu", "ethercat", "cellular"],
+  "containers": false,
+  "node_red": false,
+  "persistence": {
+    "data_root": "/var/lib/omnigate",
+    "database": "edge.db",
+    "atomic_configuration_writes": true
+  }
+}

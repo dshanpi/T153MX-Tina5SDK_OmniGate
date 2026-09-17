@@ -1,0 +1,8 @@
+ENABLED=1
+HEALTH_URL=http://127.0.0.1/api/health
+CHECK_INTERVAL=10
+FAILURE_THRESHOLD=3
+RESTART_COOLDOWN=120
+# Enable only after board-level watchdog and rollback tests pass.
+WATCHDOG_ENABLE=0
+WATCHDOG_DEVICE=/dev/watchdog

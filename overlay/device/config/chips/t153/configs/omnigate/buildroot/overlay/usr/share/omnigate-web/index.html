@@ -194,7 +194,7 @@
         <div class="page-head"><div><h2>服务与日志</h2><p>启停服务、查看日志和修改管理密码</p></div></div>
         <div class="grid">
           <div class="card"><h3>服务控制</h3><div class="actions"><button class="btn" onclick="service('thingsboard','start')">启动 ThingsBoard</button><button class="btn" onclick="service('thingsboard','stop')">停止</button><button class="btn" onclick="service('bluetooth','start')">启动蓝牙音响</button><button class="btn" onclick="service('ntp','restart')">重启 NTP</button></div><pre id="serviceOutput" class="output">--</pre></div>
-          <div class="card"><h3>修改管理密码</h3><div class="field"><label>新密码（至少 8 位）</label><input id="newPassword" type="password"></div><div class="actions"><button class="btn primary" onclick="changePassword()">修改密码</button></div></div>
+          <div class="card"><h3>修改管理密码</h3><div class="field"><label>新密码（至少 12 位）</label><input id="newPassword" type="password"></div><div class="actions"><button class="btn primary" onclick="changePassword()">修改密码</button></div></div>
           <div class="card full"><div class="card-title"><h3>系统日志</h3><div><select id="logName" class="input"><option value="web">管理页面</option><option value="thingsboard">ThingsBoard</option><option value="messages">系统消息</option></select></div></div><div class="actions"><button class="btn" onclick="loadLog()">刷新日志</button></div><pre id="logOutput" class="output">--</pre></div>
         </div>
       </section>

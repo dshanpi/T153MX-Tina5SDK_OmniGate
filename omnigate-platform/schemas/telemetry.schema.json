@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://omnigate.local/schemas/telemetry.schema.json",
+  "title": "OmniGate normalized telemetry",
+  "type": "object",
+  "required": ["schema_version", "device_id", "timestamp", "values"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "device_id": {"type": "string", "minLength": 1, "maxLength": 128},
+    "timestamp": {"type": "string", "format": "date-time"},
+    "sequence": {"type": "integer", "minimum": 0},
+    "quality": {"enum": ["good", "uncertain", "bad"]},
+    "values": {"type": "object", "minProperties": 1, "additionalProperties": {"type": ["number", "integer", "boolean", "string", "null"]}}
+  },
+  "additionalProperties": false
+}

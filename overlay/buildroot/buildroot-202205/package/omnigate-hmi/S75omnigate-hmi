@@ -1,0 +1,34 @@
+#!/bin/sh
+
+NAME=omnigate-hmi
+PIDFILE=/var/run/$NAME.pid
+DAEMON=/usr/bin/omnigate-hmi-launcher
+
+[ -r /etc/default/omnigate-hmi ] && . /etc/default/omnigate-hmi
+ENABLED=${ENABLED:-1}
+
+start()
+{
+	[ "$ENABLED" = "1" ] || return 0
+	[ -x "$DAEMON" ] || return 1
+	if [ -s "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
+		return 0
+	fi
+	mkdir -p /var/run /var/log /var/lib/omnigate-hmi
+	echo "Starting $NAME..."
+	QT_PLATFORM="$QT_PLATFORM" start-stop-daemon -S -b -m -p "$PIDFILE" -x "$DAEMON"
+}
+
+stop()
+{
+	start-stop-daemon -K -p "$PIDFILE" -R 5 2>/dev/null || true
+	rm -f "$PIDFILE"
+}
+
+case "$1" in
+	start) start ;;
+	stop) stop ;;
+	restart) stop; start ;;
+	status) [ -s "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null ;;
+	*) echo "Usage: $0 {start|stop|restart|status}"; exit 1 ;;
+esac

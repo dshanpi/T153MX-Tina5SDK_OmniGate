@@ -23,7 +23,11 @@ insert_after()
 insert_after 'source "package/openpowerlink/Config.in"' \
 	'	source "package/soem/Config.in"'
 insert_after 'source "package/soem/Config.in"' \
+	'	source "package/omnigate-core/Config.in"'
+insert_after 'source "package/omnigate-core/Config.in"' \
 	'	source "package/omnigate-ethercat/Config.in"'
+insert_after 'source "package/omnigate-ethercat/Config.in"' \
+	'	source "package/omnigate-hmi/Config.in"'
 insert_after 'source "package/python-iso8601/Config.in"' \
 	'	source "package/python-jsonpath-rw/Config.in"'
 insert_after 'menu "Networking applications"' \

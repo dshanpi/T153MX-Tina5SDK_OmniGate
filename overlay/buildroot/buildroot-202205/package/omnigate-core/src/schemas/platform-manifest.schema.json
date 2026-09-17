@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://omnigate.local/schemas/platform-manifest-v1.json",
+  "title": "OmniGate Platform Manifest",
+  "type": "object",
+  "required": ["schema_version", "board_id", "soc", "runtime_profile", "channels"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "board_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]+$"},
+    "soc": {"type": "string", "minLength": 2},
+    "runtime_profile": {"enum": ["lite", "enhanced"]},
+    "capabilities": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "channels": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "required": ["kind", "device"],
+        "properties": {
+          "kind": {"enum": ["ethernet", "can", "serial", "cellular", "wifi", "display"]},
+          "device": {"type": "string", "minLength": 1},
+          "role": {"type": "string"},
+          "exclusive": {"type": "boolean"}
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}

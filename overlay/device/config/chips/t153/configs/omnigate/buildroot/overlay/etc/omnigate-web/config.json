@@ -1,6 +1,7 @@
 {
   "auth": {
     "username": "admin",
+    "role": "administrator",
     "salt": "omnigate-v1",
     "password_hash": "9054c1d12f61c3ab978ed0054f2967f5a7eaf2fd108e1dc1aca6a7029fcbba4e",
     "must_change": true
