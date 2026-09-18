@@ -8,6 +8,13 @@ if [ ! -d "$TARGET/.repo" ]; then
 fi
 echo "[OVERLAY] copy files from $SRC_DIR/overlay to $TARGET"
 (cd "$SRC_DIR/overlay" && tar -cpf - .) | (cd "$TARGET" && tar -xpf -)
+
+GOODIX_DRIVER="$TARGET/kernel/linux-5.10-origin/drivers/input/touchscreen/goodix.c"
+GOODIX_PATCH="$SRC_DIR/patches/linux-5.10-origin/0001-goodix-reset-without-int-gpio.patch"
+if ! grep -Fq 'goodix,reset-without-int-gpio' "$GOODIX_DRIVER"; then
+	patch -d "$TARGET" -p1 < "$GOODIX_PATCH"
+fi
+
 BR_CONFIG_IN="$TARGET/buildroot/buildroot-202205/package/Config.in"
 insert_after()
 {

@@ -1084,6 +1084,7 @@
 		interrupt-parent = <&pio>;
 		interrupts = <9 7 IRQ_TYPE_EDGE_FALLING>;
 		reset-gpios = <&pio PJ 6 GPIO_ACTIVE_LOW>;
+		goodix,reset-without-int-gpio;
 		touchscreen-size-x = <1024>;
 		touchscreen-size-y = <768>;
 		status = "okay";

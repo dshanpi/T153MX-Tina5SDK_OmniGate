@@ -39,4 +39,9 @@ while IFS= read -r relative; do
 done < "${LIST_FILE}"
 
 "${PACKAGE_DIR}/scripts/verify_offline_sources.sh" "${TARGET_DIR}"
+[ -f "${TARGET_DIR}/kernel/linux-5.10-origin/drivers/input/touchscreen/goodix.c" ] ||
+	fail "target Goodix driver missing"
+grep -Fq 'goodix,reset-without-int-gpio' \
+	"${TARGET_DIR}/kernel/linux-5.10-origin/drivers/input/touchscreen/goodix.c" ||
+	fail "target Goodix reset-only patch missing"
 echo "[OK] ${checked} overlay files match target SDK"

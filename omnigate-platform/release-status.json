@@ -4,7 +4,7 @@
   "profiles": {
     "lite": {
       "software_tests": "passed",
-      "t153mx_short_board_test": "passed-with-peripheral-limitations",
+      "t153mx_short_board_test": "passed-with-limitations",
       "soak_24h": "not-run"
     },
     "enhanced": {
@@ -32,20 +32,20 @@
     "G2": {
       "status": "passed",
       "evidence": [
-        "docs/goodix-platform-continuation-2026-09-16.md",
-        "docs/software-verification-2026-09-16.md"
-      ]
+        "docs/board-validation-2026-09-17.md"
+      ],
+      "reason": "Full-erase task flash-1789697941235443600 verified 497333984 committed bytes, rebooted successfully and reached Linux/Web/HMI readiness within 120 seconds."
     },
     "G3": {
       "status": "passed-with-limitations",
       "evidence": [
-        "docs/software-verification-2026-09-16.md",
-        "../acceptance-results/bootclean-20260916/final-report.md"
+        "docs/board-validation-2026-09-17.md"
       ],
       "limitations": [
-        "No external CANopen, Modbus, or EtherCAT slave was attached.",
-        "The physical touch result is an operator confirmation; automated coordinate coverage was not recorded."
-      ]
+        "Physical touch-coordinate input was not exercised on the flashed image.",
+        "No external Ethernet, CAN, RS485, EtherCAT or cellular test fixture was connected."
+      ],
+      "reason": "Linux #70, GT911 recovery and event node, CAN 500 kbit/s configuration, safe unloaded CAN state, HMI/Web health, framebuffer, Wi-Fi and Bluetooth passed. Physical touch coordinates and external Ethernet/CAN/RS485/EtherCAT/cellular fixtures were not exercised."
     },
     "G4": {
       "status": "not-run",
